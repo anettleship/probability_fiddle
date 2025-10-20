@@ -15,3 +15,12 @@ class Unit:
     
     def health(self):
         return self.health
+    
+class Weapon:
+    def __init__(self, name, range, attacks, strength, armor_penetration, damage):
+        self.name = name
+        self.range = range
+        self.attacks = attacks
+        self.strength = strength
+        self.armor_penetration = armor_penetration
+        self.damage = damage
