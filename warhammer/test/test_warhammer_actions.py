@@ -21,3 +21,6 @@ def test_melee_attack_action_properties():
     assert attack_action.target == target, "Target should be the unit that is being attacked"
     assert attack_action.weapon == melee_weapon, "Weapon should be the weapon used in the attack"
 
+def test_ranged_attack_hit_probability():
+
+    pass
