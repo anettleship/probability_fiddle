@@ -1,4 +1,4 @@
-from probability_objects import DiceRoll
+from ..probability_objects import DiceRoll
 
 def test_dice_roll_returns_number_within_range():
 

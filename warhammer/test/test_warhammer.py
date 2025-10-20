@@ -1,5 +1,5 @@
-from warhammer import Unit
-from warhammer import RangedWeapon, MeleeWeapon
+from ..warhammer import Unit
+from ..warhammer import RangedWeapon, MeleeWeapon
 
 def test_warhammer_unit_is_alive():
 
