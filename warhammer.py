@@ -17,10 +17,21 @@ class Unit:
         return self.health
     
 class Weapon:
-    def __init__(self, name, range, attacks, strength, armor_penetration, damage):
+    def __init__(self, bearer: Unit, name, attacks, strength, armour_penetration, damage):
         self.name = name
-        self.range = range
         self.attacks = attacks
         self.strength = strength
-        self.armor_penetration = armor_penetration
+        self.armour_penetration = armour_penetration
         self.damage = damage
+        self.bearer = bearer 
+
+class RangedWeapon(Weapon):
+    def __init__(self, bearer: Unit, name, range, attacks, ballistic_skill, strength, armour_penetration, damage):
+        super().__init__(bearer, name, attacks, strength, armour_penetration, damage)
+        self.range = range
+        self.ballistic_skill = ballistic_skill
+
+class MeleeWeapon(Weapon):
+    def __init__(self, bearer: Unit, name, attacks, weapon_skill, strength, armour_penetration, damage):
+        super().__init__(bearer, name, attacks, strength, armour_penetration, damage)
+        self.weapon_skill = weapon_skill

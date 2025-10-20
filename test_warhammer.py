@@ -1,4 +1,5 @@
 from warhammer import Unit
+from warhammer import RangedWeapon, MeleeWeapon
 
 def test_warhammer_unit_is_alive():
 
@@ -21,12 +22,27 @@ def test_warhammer_unit_has_properties():
     assert unit.health == unit.wounds, "Unit health should equal wounds on creation"
 
 def test_warhammer_weapon_properties():
-    from warhammer import Weapon
 
-    weapon = Weapon(name="Bolter", range=24, attacks=1, strength=4, armor_penetration=-1, damage=1)
+    unit = Unit(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
+    weapon = RangedWeapon(bearer=unit, name="Bolter", range=24, attacks=1, ballistic_skill=4, strength=4, armour_penetration=-1, damage=1)
     assert weapon.name == "Bolter", "Weapon name should be 'Bolter'"
     assert weapon.range == 24, "Weapon range should be 24"
     assert weapon.attacks == 1, "Weapon attacks should be 1"
+    assert weapon.ballistic_skill == 4, "Weapon ballistic skill should be 4"
     assert weapon.strength == 4, "Weapon strength should be 4"
-    assert weapon.armor_penetration == -1, "Weapon armor penetration should be -1"
+    assert weapon.armour_penetration == -1, "Weapon armor penetration should be -1"
     assert weapon.damage == 1, "Weapon damage should be 1"
+    assert weapon.bearer == unit, "Weapon bearer should be the unit it was assigned to"
+
+def test_warhammer_melee_weapon_properties():
+
+    unit = Unit(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
+    weapon = MeleeWeapon(bearer=unit, name="Chainsword", attacks=2, weapon_skill=3, strength=4, armour_penetration=-1, damage=1)
+
+    assert weapon.name == "Chainsword", "Weapon name should be 'Chainsword'"
+    assert weapon.attacks == 2, "Weapon attacks should be 2"
+    assert weapon.weapon_skill == 3, "Weapon skill should be 3"
+    assert weapon.strength == 4, "Weapon strength should be 4"
+    assert weapon.armour_penetration == -1, "Weapon armor penetration should be -1"
+    assert weapon.damage == 1, "Weapon damage should be 1"
+    assert weapon.bearer == unit, "Weapon bearer should be the unit it was assigned to"
