@@ -1,6 +1,6 @@
 import json
 
-from .warhammer import Model, Unit
+from .warhammer import MeleeWeapon, Model, RangedWeapon, Unit
 
 
 class LoadUnitDataFromRoster:
@@ -73,6 +73,9 @@ class LoadUnitDataFromRoster:
                     inv_text = chars[0].get("$text", "")
                     invulnerable_save = int(inv_text.replace("+", ""))
 
+        # Extract weapons
+        ranged_weapons, melee_weapons = self._extract_weapons(selection)
+
         models = []
         if model_profile:
             chars = model_profile.get("characteristics", [])
@@ -88,6 +91,8 @@ class LoadUnitDataFromRoster:
                 leadership=int(characteristics.get("LD", "0").replace("+", "")),
                 objective_control=int(characteristics.get("OC", "0")),
                 invulnerable_save=invulnerable_save,
+                ranged_weapons=ranged_weapons,
+                melee_weapons=melee_weapons,
             )
             models.append(model)
 
@@ -152,6 +157,9 @@ class LoadUnitDataFromRoster:
                             inv_text = chars[0].get("$text", "")
                             model_invulnerable_save = int(inv_text.replace("+", ""))
 
+                # Extract weapons for this model
+                ranged_weapons, melee_weapons = self._extract_weapons(model_sel)
+
                 if model_profile:
                     chars = model_profile.get("characteristics", [])
                     characteristics = {c["name"]: c["$text"] for c in chars}
@@ -171,7 +179,93 @@ class LoadUnitDataFromRoster:
                             ),
                             objective_control=int(characteristics.get("OC", "0")),
                             invulnerable_save=model_invulnerable_save,
+                            ranged_weapons=ranged_weapons,
+                            melee_weapons=melee_weapons,
                         )
                         models.append(model)
 
         return models
+
+    def _extract_weapons(self, selection):
+        """Extract weapons from a selection (model or unit)."""
+        ranged_weapons = {}
+        melee_weapons = {}
+
+        # Look through selections for weapon upgrades
+        selections = selection.get("selections", [])
+        for sel in selections:
+            if sel.get("type") == "upgrade":
+                # Check profiles for weapon data
+                profiles = sel.get("profiles", [])
+                for profile in profiles:
+                    weapon_type = profile.get("typeName")
+                    if weapon_type in ["Ranged Weapons", "Melee Weapons"]:
+                        weapon_name = profile.get("name")
+                        chars = profile.get("characteristics", [])
+                        characteristics = {c["name"]: c["$text"] for c in chars}
+
+                        # Extract keywords and convert to list
+                        keywords_str = characteristics.get("Keywords", "")
+                        keywords = [
+                            k.strip()
+                            for k in keywords_str.split(",")
+                            if k.strip() and k.strip() != "-"
+                        ]
+
+                        if weapon_type == "Ranged Weapons":
+                            bs_value = characteristics.get("BS", "0")
+                            # Handle N/A for auto-hit weapons
+                            ballistic_skill = (
+                                0
+                                if bs_value == "N/A"
+                                else int(bs_value.replace("+", ""))
+                            )
+
+                            weapon = RangedWeapon(
+                                name=weapon_name,
+                                range=int(
+                                    characteristics.get("Range", "0").replace('"', "")
+                                ),
+                                attacks=self._parse_attacks(
+                                    characteristics.get("A", "1")
+                                ),
+                                ballistic_skill=ballistic_skill,
+                                strength=int(characteristics.get("S", "0")),
+                                armour_penetration=int(characteristics.get("AP", "0")),
+                                damage=self._parse_attacks(
+                                    characteristics.get("D", "1")
+                                ),
+                                keywords=keywords,
+                            )
+                            ranged_weapons[weapon_name] = weapon
+                        elif weapon_type == "Melee Weapons":
+                            weapon = MeleeWeapon(
+                                name=weapon_name,
+                                attacks=self._parse_attacks(
+                                    characteristics.get("A", "1")
+                                ),
+                                weapon_skill=int(
+                                    characteristics.get("WS", "0").replace("+", "")
+                                ),
+                                strength=int(characteristics.get("S", "0")),
+                                armour_penetration=int(characteristics.get("AP", "0")),
+                                damage=self._parse_attacks(
+                                    characteristics.get("D", "1")
+                                ),
+                                keywords=keywords,
+                            )
+                            melee_weapons[weapon_name] = weapon
+
+        return ranged_weapons, melee_weapons
+
+    def _parse_attacks(self, attacks_str):
+        """Parse attacks value (handle D6, 2D6, etc.)."""
+        # For now, return simple integer or average for dice
+        if "D6" in attacks_str.upper():
+            return 3  # Average of D6
+        if "D3" in attacks_str.upper():
+            return 2  # Average of D3
+        try:
+            return int(attacks_str)
+        except ValueError:
+            return 1  # Default

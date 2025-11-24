@@ -56,12 +56,15 @@ class Unit:
 
 
 class Weapon:
-    def __init__(self, name, attacks, strength, armour_penetration, damage):
+    def __init__(
+        self, name, attacks, strength, armour_penetration, damage, keywords=None
+    ):
         self.name = name
         self.attacks = attacks
         self.strength = strength
         self.armour_penetration = armour_penetration
         self.damage = damage
+        self.keywords = keywords if keywords is not None else []
 
 
 class RangedWeapon(Weapon):
@@ -74,15 +77,23 @@ class RangedWeapon(Weapon):
         strength,
         armour_penetration,
         damage,
+        keywords=None,
     ):
-        super().__init__(name, attacks, strength, armour_penetration, damage)
+        super().__init__(name, attacks, strength, armour_penetration, damage, keywords)
         self.range = range
         self.ballistic_skill = ballistic_skill
 
 
 class MeleeWeapon(Weapon):
     def __init__(
-        self, name, attacks, weapon_skill, strength, armour_penetration, damage
+        self,
+        name,
+        attacks,
+        weapon_skill,
+        strength,
+        armour_penetration,
+        damage,
+        keywords=None,
     ):
-        super().__init__(name, attacks, strength, armour_penetration, damage)
+        super().__init__(name, attacks, strength, armour_penetration, damage, keywords)
         self.weapon_skill = weapon_skill

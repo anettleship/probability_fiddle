@@ -1,3 +1,5 @@
+import pytest
+
 from ..warhammer_actions import MeleeAttack, RangedAttack
 
 
@@ -192,36 +194,157 @@ def test_armour_save_probabily_invulnerable_save_overrides_normal_save(
     )
 
 
-def test_attack_action_with_to_hit_to_wound_and_save_meet_expected_values(
-    space_marine, necron_warrior, bolter
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,expected_hit,expected_wound,expected_fail_save",
+    [
+        (
+            "space_marine",
+            "necron_warrior",
+            "bolter",
+            2 / 3,
+            1 / 2,
+            2 / 3,
+        ),  # Space Marine with bolter vs Necron
+        (
+            "necron_warrior",
+            "terminator_with_heavy_flamer",
+            "gauss_flayer",
+            1 / 2,
+            1 / 3,
+            1 / 6,
+        ),  # Necron with gauss flayer vs Terminator (uses invuln save)
+        (
+            "terminator_with_heavy_flamer",
+            "necron_warrior",
+            "heavy_flamer",
+            1,
+            2 / 3,
+            2 / 3,
+        ),  # Terminator with heavy flamer vs Necron (auto-hit, 5+ save = 4/6 fail)
+    ],
+)
+def test_attack_action_with_to_hit_to_wound_and_save_without_benefit_of_cover_meet_expected_values(
+    request,
+    attacker_fixture,
+    target_fixture,
+    weapon_fixture,
+    expected_hit,
+    expected_wound,
+    expected_fail_save,
 ):
-    attack_action = RangedAttack(
-        attacker=space_marine, target=necron_warrior, weapon=bolter
-    )
-    expected_hit_probability = 2 / 3  # 3+ to hit on a D6
-    expected_wound_probability = (
-        1 / 2
-    )  # 4+ to wound on a D6 when Strength equals Toughness
-    expected_probabilty_to_fail_save = (
-        2 / 3
-    )  # 5+ armour save on a D6 for a Necron Warrior with 4+ save and -1 AP is 2/3 chance to fail
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
 
-    assert attack_action.probability_to_hit() == expected_hit_probability, (
+    attack_action = RangedAttack(
+        attacker=attacker, target=target, weapon=weapon, benefit_of_cover=False
+    )
+
+    assert attack_action.probability_to_hit() == expected_hit, (
         "Ranged attack hit probability should be correct based on ballistic skill"
     )
 
-    assert attack_action.probability_to_wound() == expected_wound_probability, (
+    assert attack_action.probability_to_wound() == expected_wound, (
         "Ranged attack wound probability should be correct based on strength vs toughness"
     )
 
-    assert (
-        attack_action.probability_to_fail_save() == expected_probabilty_to_fail_save
-    ), (
+    assert attack_action.probability_to_fail_save() == expected_fail_save, (
         "Ranged attack armour save probability should be correct based on target's save and weapon's AP"
     )
     assert (
         attack_action.probability_to_damage()
-        == expected_hit_probability
-        * expected_wound_probability
-        * expected_probabilty_to_fail_save
+        == expected_hit * expected_wound * expected_fail_save
+    )
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,expected_hit,expected_wound,expected_fail_save",
+    [
+        (
+            "space_marine",
+            "necron_warrior",
+            "bolter",
+            2 / 3,
+            1 / 2,
+            1 / 2,
+        ),  # Space Marine with bolter vs Necron
+        (
+            "necron_warrior",
+            "terminator_with_heavy_flamer",
+            "gauss_flayer",
+            1 / 2,
+            1 / 3,
+            1 / 6,
+        ),  # Necron with gauss flayer vs Terminator
+        (
+            "terminator_with_heavy_flamer",
+            "necron_warrior",
+            "heavy_flamer",
+            1,
+            2 / 3,
+            2 / 3,
+        ),  # Terminator with heavy flamer vs Necron (auto-hit, 5+ save = 4/6 fail) - benefit of cover has no effect for ignores cover weapon
+    ],
+)
+def test_attack_action_with_to_hit_to_wound_and_save_with_benefit_of_cover_meet_expected_values(
+    request,
+    attacker_fixture,
+    target_fixture,
+    weapon_fixture,
+    expected_hit,
+    expected_wound,
+    expected_fail_save,
+):
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+
+    attack_action = RangedAttack(
+        attacker=attacker, target=target, weapon=weapon, benefit_of_cover=True
+    )
+
+    assert attack_action.probability_to_hit() == expected_hit, (
+        "Ranged attack hit probability should be correct based on ballistic skill"
+    )
+
+    assert attack_action.probability_to_wound() == expected_wound, (
+        "Ranged attack wound probability should be correct based on strength vs toughness"
+    )
+
+    assert attack_action.probability_to_fail_save() == expected_fail_save, (
+        "Ranged attack armour save probability should be correct based on target's save and weapon's AP with benefit of cover"
+    )
+    assert (
+        attack_action.probability_to_damage()
+        == expected_hit * expected_wound * expected_fail_save
+    )
+
+
+def test_weapon_with_lethal_hits_keyword_auto_wounds_on_critical_hit(
+    space_marine, tough_target, lethal_hits_weapon
+):
+    attack = RangedAttack(
+        attacker=space_marine, target=tough_target, weapon=lethal_hits_weapon
+    )
+
+    # Lethal Hits: Critical hit rolls (unmodified 6s) auto-wound
+    #
+    # Hit roll breakdown (BS 3+ means hit on 3,4,5,6):
+    # - Critical hits: roll 6 to hit (1/6 probability)
+    # - Normal hits: roll 3,4,5 to hit (3/6 probability)
+    # - Misses: roll 1,2 (2/6 probability)
+    #
+    # Wound roll (S4 vs T8 = need 6+ to wound):
+    # - Without Lethal Hits: ALL hits need 6+ to wound (1/6 probability)
+    # - With Lethal Hits: Critical hits skip wound roll (auto-wound)
+    #
+    # Probability to wound calculation:
+    # - Critical hits (1/6) → auto-wound (100%) = 1/6
+    # - Normal hits (3/6) → must roll to wound (1/6) = 3/6 × 1/6 = 1/12
+    # - Total probability to wound = 1/6 + 1/12 = 3/12 = 1/4
+
+    expected_wound_probability = 1 / 4
+
+    assert attack.probability_to_wound() == expected_wound_probability, (
+        "Lethal Hits weapon should auto-wound on critical hits (unmodified 6s)"
     )

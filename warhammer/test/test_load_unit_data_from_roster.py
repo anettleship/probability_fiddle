@@ -213,3 +213,32 @@ def test_terminator_assault_squad_properties():
             == assault_squad_expected_data["stats"]["objective_control"]
         )
         assert model.is_alive()
+
+
+def test_load_terminator_squad_has_melee_weapons():
+    roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
+    assault_squad = roster_loader.get_unit(assault_squad_expected_data["name"])
+
+    sergeant = assault_squad.models["Assault Terminator Sergeant"][0]
+
+    # RED: Write simplest failing test - does the model have any melee weapons?
+    assert len(sergeant.melee_weapons) > 0, (
+        "Assault Terminator Sergeant should have at least one melee weapon"
+    )
+
+
+def test_load_terminator_squad_heavy_flamer_has_weapon_keywords():
+    roster_loader = LoadUnitDataFromRoster(datasource=single_squad_roster_path)
+    terminator_unit = roster_loader.get_unit("Terminator Squad")
+
+    heavy_weapon_model = terminator_unit.models["Terminator w/ Heavy Weapon"][0]
+    heavy_flamer = heavy_weapon_model.ranged_weapons.get("Heavy Flamer")
+
+    assert heavy_flamer is not None, "Model should have Heavy Flamer weapon"
+    assert hasattr(heavy_flamer, "keywords"), "Weapon should have keywords attribute"
+    assert "Ignores Cover" in heavy_flamer.keywords, (
+        "Heavy Flamer should have 'Ignores Cover' keyword"
+    )
+    assert "Torrent" in heavy_flamer.keywords, (
+        "Heavy Flamer should have 'Torrent' keyword"
+    )

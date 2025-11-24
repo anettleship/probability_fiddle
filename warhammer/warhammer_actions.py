@@ -15,27 +15,68 @@ class Attack:
             * self.probability_to_fail_save()
         )
 
+    def _calculate_wound_roll_required(self):
+        """Calculate the required wound roll based on weapon strength vs target toughness."""
+        strength = self.weapon.strength
+        toughness = self.target.toughness
+
+        if strength >= 2 * toughness:
+            return 2
+        elif strength > toughness:
+            return 3
+        elif strength == toughness:
+            return 4
+        elif strength * 2 <= toughness:
+            return 6
+        else:
+            return 5
+
+    def _calculate_wound_probability_with_lethal_hits(self):
+        """Calculate wound probability when weapon has Lethal Hits keyword."""
+        # Get hit skill to determine critical vs normal hits
+        if hasattr(self.weapon, "ballistic_skill"):
+            required_hit_roll = self.weapon.ballistic_skill
+        elif hasattr(self.weapon, "weapon_skill"):
+            required_hit_roll = self.weapon.weapon_skill
+        else:
+            required_hit_roll = 0
+
+        # Critical hits: unmodified 6s always auto-wound
+        critical_hit_probability = 1 / 6
+
+        # Normal hits: successful hits that aren't 6s (must roll to wound)
+        if required_hit_roll == 0:
+            # Auto-hit weapon: conceptually still has critical 6s
+            normal_hit_probability = 5 / 6
+        elif required_hit_roll <= 6:
+            # Normal hits = all successful hit rolls except 6
+            # e.g., 3+ to hit gives 3,4,5,6 but 6 is critical, so normal = 3,4,5
+            total_successful_hits = 7 - required_hit_roll
+            normal_hit_probability = (total_successful_hits - 1) / 6
+        else:
+            normal_hit_probability = 0
+
+        # Calculate wound probability for normal hits
+        wound_roll = self._calculate_wound_roll_required()
+        normal_wound_probability = (7 - wound_roll) / 6
+
+        # Total wounds = critical hits (auto-wound) + normal hits × wound probability
+        return critical_hit_probability + (
+            normal_hit_probability * normal_wound_probability
+        )
+
     def probability_to_wound(self):
         if self.weapon is None:
             raise NotImplementedError(
                 "Weapon must be defined in subclass to calculate wound probability."
             )
 
-        strength = self.weapon.strength
-        toughness = self.target.toughness
+        # Check for Lethal Hits keyword
+        if hasattr(self.weapon, "keywords") and "Lethal Hits" in self.weapon.keywords:
+            return self._calculate_wound_probability_with_lethal_hits()
 
-        # Determine required roll based on Strength vs Toughness
-        if strength >= 2 * toughness:
-            required_roll = 2  # 2+ to wound
-        elif strength > toughness:
-            required_roll = 3  # 3+ to wound
-        elif strength == toughness:
-            required_roll = 4  # 4+ to wound
-        elif strength * 2 <= toughness:
-            required_roll = 6  # 6+ to wound
-        else:  # strength < toughness (but not half or less)
-            required_roll = 5  # 5+ to wound
-
+        # Standard wound calculation (no Lethal Hits)
+        required_roll = self._calculate_wound_roll_required()
         successful_outcomes = 7 - required_roll
         return successful_outcomes / 6
 
@@ -82,12 +123,18 @@ class RangedAttack(Attack):
 
     def probability_to_hit(self):
         required_roll = self.weapon.ballistic_skill
+        if required_roll == 0:
+            return 1.0  # Auto-hit weapon
         successful_outcomes = (
             7 - required_roll
         )  # e.g., for 4+, successful outcomes are 4,5,6 => 3 outcomes
         return successful_outcomes / 6
 
     def apply_benefit_of_cover(self, modified_save: int) -> int:
+        # Check if weapon has "Ignores Cover" keyword
+        if hasattr(self.weapon, "keywords") and "Ignores Cover" in self.weapon.keywords:
+            return modified_save  # No benefit of cover applied
+
         if modified_save > 3:
             modified_save -= 1  # Cover lowers save requirement by 1 with a floor of 3+
         return modified_save

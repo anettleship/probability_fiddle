@@ -102,6 +102,19 @@ def necron_warrior():
 
 
 @pytest.fixture
+def tough_target():
+    return Model(
+        name="Tough Target",
+        movement=5,
+        toughness=8,  # High toughness for testing Lethal Hits
+        save=3,
+        wounds=5,
+        leadership=7,
+        objective_control=1,
+    )
+
+
+@pytest.fixture
 def storm_bolter():
     return RangedWeapon(
         name="Storm Bolter",
@@ -124,6 +137,21 @@ def heavy_flamer():
         strength=5,
         armour_penetration=-1,
         damage=1,
+        keywords=["Ignores Cover", "Torrent"],
+    )
+
+
+@pytest.fixture
+def lethal_hits_weapon():
+    return RangedWeapon(
+        name="Precision Rifle",
+        range=24,
+        attacks=1,
+        ballistic_skill=3,  # 3+ to hit
+        strength=4,
+        armour_penetration=-1,
+        damage=1,
+        keywords=["Lethal Hits"],
     )
 
 
@@ -188,7 +216,7 @@ def terminator_with_heavy_flamer(heavy_flamer, power_fist):
 
 
 @pytest.fixture
-def terminator_squad(
+def terminator_unit(
     terminator_sergeant, terminator_with_storm_bolter, terminator_with_heavy_flamer
 ):
     """5-man Terminator squad: 1 Sergeant, 3 with storm bolters, 1 with heavy flamer"""
@@ -200,3 +228,10 @@ def terminator_squad(
         terminator_with_heavy_flamer,
     ]
     return Unit(models=models, name="Terminator Squad")
+
+
+@pytest.fixture
+def necron_warrior_unit(necron_warrior):
+    """Unit with a single Necron Warrior model."""
+    models = [necron_warrior] * 10
+    return Unit(models=models, name="Necron Warrior Unit")
