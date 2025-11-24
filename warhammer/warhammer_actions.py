@@ -43,8 +43,8 @@ class Attack:
         elif modified_save > 6:
             modified_save = 7  # Impossible save
 
-        if benefit_of_cover and modified_save > 3:
-            modified_save -= 1  # Cover lowers save requirement by 1 with a floor of 3+
+        if benefit_of_cover:
+            modified_save = self.apply_benefit_of_cover(modified_save)
 
         if (
             self.target.invulnerable_save is not None
@@ -56,6 +56,9 @@ class Attack:
             modified_save - 1
         )  # e.g. a 5+ save fails on 1,2,3,4 => 4 outcomes
         return probable_fail_outcomes / 6
+
+    def apply_benefit_of_cover(self, modified_save: int) -> int:
+        return modified_save
 
 
 class RangedAttack(Attack):
@@ -69,6 +72,11 @@ class RangedAttack(Attack):
             7 - required_roll
         )  # e.g., for 4+, successful outcomes are 4,5,6 => 3 outcomes
         return successful_outcomes / 6
+
+    def apply_benefit_of_cover(self, modified_save: int) -> int:
+        if modified_save > 3:
+            modified_save -= 1  # Cover lowers save requirement by 1 with a floor of 3+
+        return modified_save
 
 
 class MeleeAttack(Attack):

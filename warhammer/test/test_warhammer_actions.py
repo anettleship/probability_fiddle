@@ -100,6 +100,24 @@ def test_armour_save_probabily_without_benefit_of_cover_for_space_marine_on_necr
     )
 
 
+def test_armour_save_for_melee_attack_does_not_apply_benefit_of_cover(
+    space_marine, necron_warrior, chainsword
+):
+    attack_action = MeleeAttack(
+        attacker=space_marine, target=necron_warrior, weapon=chainsword
+    )
+    expected_probabilty_to_fail_save = (
+        2 / 3
+    )  # 5+ armour save on a D6 for a Necron Warrior with 4+ save and -1 AP is 2/3 chance to fail
+
+    assert (
+        attack_action.probability_to_fail_save(benefit_of_cover=True)
+        == expected_probabilty_to_fail_save
+    ), (
+        "Melee attack armour save probability should be correct based on target's save and weapon's AP without benefit of cover"
+    )
+
+
 def test_armour_save_probabily_with_benefit_of_cover_for_space_marine_on_necron(
     space_marine, necron_warrior, bolter
 ):
