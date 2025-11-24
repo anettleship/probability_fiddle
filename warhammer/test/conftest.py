@@ -15,7 +15,7 @@ def bolter():
         name="Bolter",
         range=24,
         attacks=1,
-        ballistic_skill=4,
+        ballistic_skill=3,
         strength=4,
         armour_penetration=-1,
         damage=1,

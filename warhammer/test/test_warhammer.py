@@ -33,7 +33,7 @@ def test_warhammer_weapon_properties(space_marine):
     assert weapon.name == "Bolter", "Weapon name should be 'Bolter'"
     assert weapon.range == 24, "Weapon range should be 24"
     assert weapon.attacks == 1, "Weapon attacks should be 1"
-    assert weapon.ballistic_skill == 4, "Weapon ballistic skill should be 4"
+    assert weapon.ballistic_skill == 3, "Weapon ballistic skill should be 4"
     assert weapon.strength == 4, "Weapon strength should be 4"
     assert weapon.armour_penetration == -1, "Weapon armor penetration should be -1"
     assert weapon.damage == 1, "Weapon damage should be 1"

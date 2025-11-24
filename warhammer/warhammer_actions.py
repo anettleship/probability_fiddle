@@ -2,10 +2,18 @@ from ..warhammer.warhammer import MeleeWeapon, Model, RangedWeapon
 
 
 class Attack:
-    def __init__(self, attacker: Model, target: Model):
+    def __init__(self, attacker: Model, target: Model, benefit_of_cover: bool = False):
         self.attacker = attacker
         self.target = target
+        self.benefit_of_cover = benefit_of_cover
         self.weapon = None  # To be defined in subclasses
+
+    def probability_to_damage(self) -> float:
+        return (
+            self.probability_to_hit()
+            * self.probability_to_wound()
+            * self.probability_to_fail_save()
+        )
 
     def probability_to_wound(self):
         if self.weapon is None:
@@ -31,7 +39,7 @@ class Attack:
         successful_outcomes = 7 - required_roll
         return successful_outcomes / 6
 
-    def probability_to_fail_save(self, benefit_of_cover: bool = False) -> float:
+    def probability_to_fail_save(self) -> float:
         if self.weapon is None:
             raise NotImplementedError(
                 "Weapon must be defined in subclass to calculate save probability."
@@ -43,7 +51,7 @@ class Attack:
         elif modified_save > 6:
             modified_save = 7  # Impossible save
 
-        if benefit_of_cover:
+        if self.benefit_of_cover:
             modified_save = self.apply_benefit_of_cover(modified_save)
 
         if (
@@ -62,8 +70,14 @@ class Attack:
 
 
 class RangedAttack(Attack):
-    def __init__(self, attacker: Model, target: Model, weapon: RangedWeapon):
-        super().__init__(attacker, target)
+    def __init__(
+        self,
+        attacker: Model,
+        target: Model,
+        weapon: RangedWeapon,
+        benefit_of_cover: bool = False,
+    ):
+        super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
 
     def probability_to_hit(self):
@@ -80,8 +94,14 @@ class RangedAttack(Attack):
 
 
 class MeleeAttack(Attack):
-    def __init__(self, attacker: Model, target: Model, weapon: MeleeWeapon):
-        super().__init__(attacker, target)
+    def __init__(
+        self,
+        attacker: Model,
+        target: Model,
+        weapon: MeleeWeapon,
+        benefit_of_cover: bool = False,
+    ):
+        super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
 
     def probability_to_hit(self):
