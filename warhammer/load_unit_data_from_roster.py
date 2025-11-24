@@ -6,8 +6,29 @@ from .warhammer import Model, Unit
 class LoadUnitDataFromRoster:
     def __init__(self, datasource):
         self.datasource = datasource
-        self.units = {}
+        self.units = {}  # Dict with unique keys for easy lookup
+        self._unit_name_counters = {}  # Track duplicate names
         self._load_roster()
+
+    def get_unit(self, name):
+        """Get a unit by name. Returns first unit with matching name."""
+        for key, unit in self.units.items():
+            if unit.name == name:
+                return unit
+        return None
+
+    def get_units_by_name(self, name):
+        """Get all units with matching name (useful for duplicates like Deff Dreads)."""
+        return [unit for unit in self.units.values() if unit.name == name]
+
+    def _generate_unique_key(self, unit_name):
+        """Generate unique key for unit, handling duplicates."""
+        if unit_name not in self._unit_name_counters:
+            self._unit_name_counters[unit_name] = 0
+            return unit_name
+        else:
+            self._unit_name_counters[unit_name] += 1
+            return f"{unit_name}_{self._unit_name_counters[unit_name]}"
 
     def _load_roster(self):
         """Load and parse the roster JSON file."""
@@ -62,7 +83,8 @@ class LoadUnitDataFromRoster:
 
         # Create Unit (even though it's a single character model)
         unit = Unit(models=models, name=model_name)
-        self.units[model_name] = unit
+        unique_key = self._generate_unique_key(model_name)
+        self.units[unique_key] = unit
 
     def _process_unit(self, unit_selection):
         """Process a unit selection and create Unit with Models."""
@@ -73,7 +95,8 @@ class LoadUnitDataFromRoster:
 
         # Create Unit
         unit = Unit(models=models, name=unit_name)
-        self.units[unit_name] = unit
+        unique_key = self._generate_unique_key(unit_name)
+        self.units[unique_key] = unit
 
     def _extract_models(self, unit_selection):
         # Extract model selections within the unit

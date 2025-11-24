@@ -65,7 +65,7 @@ def roster_loader(datasource_path=single_squad_roster_path):
 
 def test_load_terminator_squad_unit_from_roster_shows_single_unit(roster_loader):
     assert len(roster_loader.units) == 1, "Roster should contain exactly one unit"
-    assert "Terminator Squad" in roster_loader.units, (
+    assert roster_loader.get_unit("Terminator Squad") is not None, (
         "Roster should contain 'Terminator Squad' unit"
     )
 
@@ -73,7 +73,7 @@ def test_load_terminator_squad_unit_from_roster_shows_single_unit(roster_loader)
 def test_load_terminator_squad_unit_from_roster_models_have_correct_attributes(
     roster_loader,
 ):
-    terminator_unit = roster_loader.units["Terminator Squad"]
+    terminator_unit = roster_loader.get_unit("Terminator Squad")
     all_models = terminator_unit.all_models()
     assert len(all_models) == 5, "Terminator Squad should contain 5 models"
     for model in all_models:
@@ -87,7 +87,7 @@ def test_load_terminator_squad_unit_from_roster_models_have_correct_attributes(
 
 
 def test_load_terminator_squad_unit_from_roster_has_correct_model_types(roster_loader):
-    terminator_unit = roster_loader.units["Terminator Squad"]
+    terminator_unit = roster_loader.get_unit("Terminator Squad")
     assert "Terminator Sergeant" in terminator_unit.model_types(), (
         "Terminator Squad should contain 'Terminator Sergeant' model type"
     )
@@ -100,7 +100,7 @@ def test_load_terminator_squad_unit_from_roster_has_correct_model_types(roster_l
 
 
 def test_load_terminator_squad_unit_from_roster_has_correct_model_counts(roster_loader):
-    terminator_unit = roster_loader.units["Terminator Squad"]
+    terminator_unit = roster_loader.get_unit("Terminator Squad")
     assert len(terminator_unit.models["Terminator Sergeant"]) == 1, (
         "Terminator Squad should contain 1 'Terminator Sergeant'"
     )
@@ -117,23 +117,23 @@ def test_load_army_from_roster_contains_multiple_units():
     assert len(roster_loader.units) == 4, (
         "Army roster should contain exactly four units"
     )
-    assert "Terminator Squad" in roster_loader.units, (
+    assert roster_loader.get_unit("Terminator Squad") is not None, (
         "Army roster should contain 'Terminator Squad' unit"
     )
-    assert "Terminator Assault Squad" in roster_loader.units, (
+    assert roster_loader.get_unit("Terminator Assault Squad") is not None, (
         "Army roster should contain 'Terminator Assault Squad' unit"
     )
-    assert "Chaplain in Terminator Armour" in roster_loader.units, (
+    assert roster_loader.get_unit("Chaplain in Terminator Armour") is not None, (
         "Army roster should contain 'Chaplain in Terminator Armour' unit"
     )
-    assert "Librarian in Terminator Armour" in roster_loader.units, (
+    assert roster_loader.get_unit("Librarian in Terminator Armour") is not None, (
         "Army roster should contain 'Librarian in Terminator Armour' unit"
     )
 
 
 def test_chaplain_in_terminator_armour_properties():
     roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
-    chaplain = roster_loader.units[chaplain_expected_data["name"]]
+    chaplain = roster_loader.get_unit(chaplain_expected_data["name"])
 
     all_models = chaplain.all_models()
     assert len(all_models) == chaplain_expected_data["model_count"]
@@ -153,7 +153,7 @@ def test_chaplain_in_terminator_armour_properties():
 
 def test_librarian_in_terminator_armour_properties():
     roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
-    librarian = roster_loader.units[librarian_expected_data["name"]]
+    librarian = roster_loader.get_unit(librarian_expected_data["name"])
 
     all_models = librarian.all_models()
     assert len(all_models) == librarian_expected_data["model_count"]
@@ -173,7 +173,7 @@ def test_librarian_in_terminator_armour_properties():
 
 def test_terminator_assault_squad_properties():
     roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
-    assault_squad = roster_loader.units[assault_squad_expected_data["name"]]
+    assault_squad = roster_loader.get_unit(assault_squad_expected_data["name"])
 
     all_models = assault_squad.all_models()
     assert len(all_models) == assault_squad_expected_data["model_count"]
