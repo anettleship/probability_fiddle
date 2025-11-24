@@ -1,6 +1,7 @@
 import json
 
-from .warhammer import MeleeWeapon, Model, RangedWeapon, Unit
+from .warhammer import Unit
+from .warhammer_base import MeleeWeapon, Model, RangedWeapon
 
 
 class LoadUnitDataFromRoster:

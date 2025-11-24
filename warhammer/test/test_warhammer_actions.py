@@ -348,3 +348,46 @@ def test_weapon_with_lethal_hits_keyword_auto_wounds_on_critical_hit(
     assert attack.probability_to_wound() == expected_wound_probability, (
         "Lethal Hits weapon should auto-wound on critical hits (unmodified 6s)"
     )
+
+
+def test_attack_probability_accounts_for_multiple_attacks(
+    space_marine, necron_warrior, storm_bolter
+):
+    # TODO Check this test carefully to make sure the logic is accurate.
+    # Refactor expected damage per attack out of the test and into the implementation.
+
+    # Storm Bolter has 2 attacks (fixed value)
+    attack = RangedAttack(
+        attacker=space_marine, target=necron_warrior, weapon=storm_bolter
+    )
+
+    # Storm Bolter: BS 3+ (hits on 3,4,5,6), S4 vs T4 (4+ to wound), AP0 vs 4+ save (4+ save)
+    # Number of attacks: 2
+    # Probability to hit: 2/3 (3+ on D6)
+    # Probability to wound: 1/2 (4+ on D6)
+    # Probability to fail save: 1/2 (4+ save fails on 1,2,3)
+    # Damage per attack: 1
+
+    # Expected damage calculation demonstrates how to account for multiple attacks:
+    # attacks × P(hit) × P(wound) × P(fail_save) × damage_per_attack
+    # = 2 × (2/3) × (1/2) × (1/2) × 1
+    # = 2 × 1/6 = 1/3 ≈ 0.333
+
+    attacks = storm_bolter.attacks
+    expected_damage_per_attack = (
+        attack.probability_to_hit()
+        * attack.probability_to_wound()
+        * attack.probability_to_fail_save()
+        * storm_bolter.damage
+    )
+    expected_total_damage = attacks * expected_damage_per_attack
+
+    assert attacks == 2, "Storm Bolter should have 2 attacks"
+    assert attack.probability_to_hit() == 2 / 3, "BS 3+ hits on 2/3"
+    assert attack.probability_to_wound() == 1 / 2, "S4 vs T4 wounds on 4+"
+    assert attack.probability_to_fail_save() == 1 / 2, "4+ save fails on 1/2"
+
+    # Expected total damage = 2 × (1/6) = 1/3
+    assert abs(expected_total_damage - (1 / 3)) < 0.001, (
+        f"Expected damage accounting for attacks: 2 × (1/6) = 1/3 (≈0.333), got {expected_total_damage}"
+    )

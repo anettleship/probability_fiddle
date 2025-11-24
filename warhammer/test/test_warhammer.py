@@ -1,4 +1,5 @@
-from ..warhammer import MeleeWeapon, Unit
+from ..warhammer import Unit
+from ..warhammer_base import MeleeWeapon
 
 
 def test_warhammer_model_is_alive(space_marine):

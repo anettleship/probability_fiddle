@@ -1,4 +1,4 @@
-from ..warhammer.warhammer import MeleeWeapon, Model, RangedWeapon
+from .warhammer_base import MeleeWeapon, Model, RangedWeapon
 
 
 class Attack:

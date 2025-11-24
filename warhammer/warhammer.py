@@ -1,36 +1,27 @@
-class Model:
+from .warhammer_actions import RangedAttack
+from .warhammer_base import Model
+
+
+class WeaponResult:
     def __init__(
         self,
-        name,
-        movement,
-        toughness,
-        save,
-        wounds,
-        leadership,
-        objective_control,
-        invulnerable_save=None,
-        feel_no_pain=None,
-        ranged_weapons=None,
-        melee_weapons=None,
+        weapon_name,
+        attacks,
+        expected_hits,
+        expected_wounds,
+        expected_damage,
     ):
-        self.name = name
-        self.movement = movement
-        self.toughness = toughness
-        self.save = save
-        self.wounds = wounds
-        self.health = wounds
-        self.leadership = leadership
-        self.objective_control = objective_control
-        self.invulnerable_save = invulnerable_save
-        self.feel_no_pain = feel_no_pain
-        self.ranged_weapons = ranged_weapons if ranged_weapons is not None else {}
-        self.melee_weapons = melee_weapons if melee_weapons is not None else {}
+        self.weapon_name = weapon_name
+        self.attacks = attacks
+        self.expected_hits = expected_hits
+        self.expected_wounds = expected_wounds
+        self.expected_damage = expected_damage
 
-    def is_alive(self):
-        return self.health > 0
 
-    def health(self):
-        return self.health
+class ShootingResult:
+    def __init__(self, weapon_results):
+        self.weapon_results = weapon_results
+        self.total_expected_damage = sum(wr.expected_damage for wr in weapon_results)
 
 
 class Unit:
@@ -54,46 +45,72 @@ class Unit:
             result.extend(model_list)
         return result
 
-
-class Weapon:
-    def __init__(
-        self, name, attacks, strength, armour_penetration, damage, keywords=None
+    def _calculate_weapon_expected_damage(
+        self, weapon, total_attacks, target_model, attacker_model
     ):
-        self.name = name
-        self.attacks = attacks
-        self.strength = strength
-        self.armour_penetration = armour_penetration
-        self.damage = damage
-        self.keywords = keywords if keywords is not None else []
+        """Calculate expected hits, wounds, and damage for a weapon."""
+        attack = RangedAttack(
+            attacker=attacker_model,
+            target=target_model,
+            weapon=weapon,
+        )
 
+        hit_probability = attack.probability_to_hit()
+        wound_probability = attack.probability_to_wound()
+        expected_damage_per_attack = attack.probability_to_damage() * weapon.damage
 
-class RangedWeapon(Weapon):
-    def __init__(
-        self,
-        name,
-        range,
-        attacks,
-        ballistic_skill,
-        strength,
-        armour_penetration,
-        damage,
-        keywords=None,
-    ):
-        super().__init__(name, attacks, strength, armour_penetration, damage, keywords)
-        self.range = range
-        self.ballistic_skill = ballistic_skill
+        expected_hits = total_attacks * hit_probability
+        expected_wounds = total_attacks * hit_probability * wound_probability
+        expected_damage = total_attacks * expected_damage_per_attack
 
+        return expected_hits, expected_wounds, expected_damage
 
-class MeleeWeapon(Weapon):
-    def __init__(
-        self,
-        name,
-        attacks,
-        weapon_skill,
-        strength,
-        armour_penetration,
-        damage,
-        keywords=None,
-    ):
-        super().__init__(name, attacks, strength, armour_penetration, damage, keywords)
-        self.weapon_skill = weapon_skill
+    def shoot_at(self, target_unit):
+        """Calculate expected damage from all ranged weapons firing at target unit."""
+
+        # Aggregate weapons across all models
+        weapons_by_name = {}
+        for model in self.all_models():
+            for weapon_name, weapon in model.ranged_weapons.items():
+                if weapon_name not in weapons_by_name:
+                    weapons_by_name[weapon_name] = {
+                        "weapon": weapon,
+                        "total_attacks": 0,
+                    }
+                weapons_by_name[weapon_name]["total_attacks"] += weapon.attacks
+
+        # Sort weapons by power (strength desc, AP desc, damage desc)
+        sorted_weapons = sorted(
+            weapons_by_name.items(),
+            key=lambda item: (
+                -item[1]["weapon"].strength,
+                item[1]["weapon"].armour_penetration,
+                -item[1]["weapon"].damage,
+            ),
+        )
+
+        # Calculate expected damage for each weapon
+        weapon_results = []
+        target_model = target_unit.all_models()[0]
+        attacker_model = self.all_models()[0]
+
+        for weapon_name, weapon_data in sorted_weapons:
+            weapon = weapon_data["weapon"]
+            total_attacks = weapon_data["total_attacks"]
+
+            expected_hits, expected_wounds, expected_damage = (
+                self._calculate_weapon_expected_damage(
+                    weapon, total_attacks, target_model, attacker_model
+                )
+            )
+
+            weapon_result = WeaponResult(
+                weapon_name=weapon_name,
+                attacks=total_attacks,
+                expected_hits=expected_hits,
+                expected_wounds=expected_wounds,
+                expected_damage=expected_damage,
+            )
+            weapon_results.append(weapon_result)
+
+        return ShootingResult(weapon_results)

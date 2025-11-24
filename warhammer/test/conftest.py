@@ -1,12 +1,7 @@
-import sys
-from pathlib import Path
-
 import pytest
 
-# Add parent directory to path to import warhammer module
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from warhammer import MeleeWeapon, Model, RangedWeapon, Unit
+from ..warhammer import Model, Unit
+from ..warhammer_base import MeleeWeapon, RangedWeapon
 
 
 @pytest.fixture
