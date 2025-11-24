@@ -6,7 +6,7 @@ import pytest
 # Add parent directory to path to import warhammer module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from warhammer import MeleeWeapon, Model, RangedWeapon
+from warhammer import MeleeWeapon, Model, RangedWeapon, Unit
 
 
 @pytest.fixture
@@ -73,3 +73,8 @@ def necron_warrior():
         leadership=7,
         objective_control=2,
     )
+
+
+@pytest.fixture
+def inferus_marines_unit():
+    return Unit()

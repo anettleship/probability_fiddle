@@ -31,8 +31,24 @@ class Model:
 
 class Unit:
     def __init__(self, models: list[Model], name: str):
-        self.models = models
+        # Group models by their name (type)
+        self.models = {}
+        for model in models:
+            if model.name not in self.models:
+                self.models[model.name] = []
+            self.models[model.name].append(model)
         self.name = name
+
+    def model_types(self):
+        """Return the set of model type names in this unit."""
+        return set(self.models.keys())
+
+    def all_models(self):
+        """Return a flat list of all models in the unit."""
+        result = []
+        for model_list in self.models.values():
+            result.extend(model_list)
+        return result
 
 
 class Weapon:
