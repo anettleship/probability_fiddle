@@ -1,9 +1,9 @@
-from ..warhammer import Unit
+from ..warhammer import Model
 from ..warhammer import RangedWeapon, MeleeWeapon
 
 def test_warhammer_unit_is_alive():
 
-    unit = Unit(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
+    unit = Model(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
     assert unit.is_alive() == True, "Unit should be alive when health is greater than 0"
 
     unit.health = 0
@@ -11,7 +11,7 @@ def test_warhammer_unit_is_alive():
 
 def test_warhammer_unit_has_properties():
 
-    unit = Unit(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
+    unit = Model(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
     assert unit.name == "Space Marine", "Unit name should be 'Space Marine'"
     assert unit.movement == 6, "Unit movement should be 6"
     assert unit.toughness == 4, "Unit toughness should be 4"
@@ -23,7 +23,7 @@ def test_warhammer_unit_has_properties():
 
 def test_warhammer_weapon_properties():
 
-    unit = Unit(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
+    unit = Model(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
     weapon = RangedWeapon(bearer=unit, name="Bolter", range=24, attacks=1, ballistic_skill=4, strength=4, armour_penetration=-1, damage=1)
     assert weapon.name == "Bolter", "Weapon name should be 'Bolter'"
     assert weapon.range == 24, "Weapon range should be 24"
@@ -36,7 +36,7 @@ def test_warhammer_weapon_properties():
 
 def test_warhammer_melee_weapon_properties():
 
-    unit = Unit(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
+    unit = Model(name="Space Marine", movement=6, toughness=4, save=3, wounds=2, leadership=8, objective_control=1)
     weapon = MeleeWeapon(bearer=unit, name="Chainsword", attacks=2, weapon_skill=3, strength=4, armour_penetration=-1, damage=1)
 
     assert weapon.name == "Chainsword", "Weapon name should be 'Chainsword'"

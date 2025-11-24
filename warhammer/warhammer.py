@@ -1,6 +1,6 @@
 
-class Unit:
-    def __init__(self, name, movement, toughness, save, wounds, leadership, objective_control):
+class Model:
+    def __init__(self, name, movement, toughness, save, wounds, leadership, objective_control, ranged_weapons: list[RangedWeapon]):
         self.name = name
         self.movement = movement
         self.toughness = toughness
@@ -16,8 +16,13 @@ class Unit:
     def health(self):
         return self.health
     
+class Unit:
+    def __init__(self, models: list[Model], name: str):
+        self.models = models
+        self.name = name
+
 class Weapon:
-    def __init__(self, bearer: Unit, name, attacks, strength, armour_penetration, damage):
+    def __init__(self, bearer: Model, name, attacks, strength, armour_penetration, damage):
         self.name = name
         self.attacks = attacks
         self.strength = strength
@@ -26,12 +31,12 @@ class Weapon:
         self.bearer = bearer 
 
 class RangedWeapon(Weapon):
-    def __init__(self, bearer: Unit, name, range, attacks, ballistic_skill, strength, armour_penetration, damage):
+    def __init__(self, bearer: Model, name, range, attacks, ballistic_skill, strength, armour_penetration, damage):
         super().__init__(bearer, name, attacks, strength, armour_penetration, damage)
         self.range = range
         self.ballistic_skill = ballistic_skill
 
 class MeleeWeapon(Weapon):
-    def __init__(self, bearer: Unit, name, attacks, weapon_skill, strength, armour_penetration, damage):
+    def __init__(self, bearer: Model, name, attacks, weapon_skill, strength, armour_penetration, damage):
         super().__init__(bearer, name, attacks, strength, armour_penetration, damage)
         self.weapon_skill = weapon_skill
