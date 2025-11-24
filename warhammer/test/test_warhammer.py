@@ -67,13 +67,14 @@ def test_warhammer_unit_properties_should_be_a_group_of_models_with_properties_a
 
     # Verify unit has correct name and models
     assert unit.name == "Tactical Squad", "Unit should have correct name"
-    assert len(unit.models) == 5, "Unit should contain 5 models"
-    assert all(isinstance(model, type(space_marine)) for model in unit.models), (
+    all_models = unit.all_models()
+    assert len(all_models) == 5, "Unit should contain 5 models"
+    assert all(isinstance(model, type(space_marine)) for model in all_models), (
         "All models should be Model instances"
     )
 
     # Verify we can access individual models
-    first_model = unit.models[0]
+    first_model = all_models[0]
     assert first_model.name == "Space Marine", (
         "Should be able to access individual model properties"
     )
@@ -82,7 +83,7 @@ def test_warhammer_unit_properties_should_be_a_group_of_models_with_properties_a
     )
 
     # Verify all models in unit have expected characteristics
-    for model in unit.models:
+    for model in all_models:
         assert model.movement == 6
         assert model.toughness == 4
         assert model.save == 3
