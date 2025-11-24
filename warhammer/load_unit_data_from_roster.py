@@ -27,24 +27,47 @@ class LoadUnitDataFromRoster:
 
         # Find unit selections (type="unit")
         for selection in selections:
+            if selection.get("type") == "model":
+                self._process_model(selection)
             if selection.get("type") == "unit":
                 self._process_unit(selection)
+
+    def _process_model(self, selection):
+        """Used for processing characters who appear separately to a unit"""
+        # This method can be expanded if individual models need to be processed
+        model_name = selection.get("name")
+
+        profiles = selection.get("profiles", [])
+        model_selection = None
+        for profile in profiles:
+            if profile.get("typeName") == "Unit":
+                model_selection = profile
+                break
+
+        models = self._extract_models(model_selection)
+
+        # Create Unit
+        unit = Unit(models=models, name=model_name)
+        self.units[model_name] = unit
 
     def _process_unit(self, unit_selection):
         """Process a unit selection and create Unit with Models."""
         unit_name = unit_selection.get("name")
 
-        # Get unit profile characteristics
-        profiles = unit_selection.get("profiles", [])
-        unit_profile = None
-        for profile in profiles:
-            if profile.get("typeName") == "Unit":
-                unit_profile = profile
-                break
-
         # Extract model selections within the unit
-        model_selections = unit_selection.get("selections", [])
+        models = self._extract_models(unit_selection)
+
+        # Create Unit
+        unit = Unit(models=models, name=unit_name)
+        self.units[unit_name] = unit
+
+    def _extract_models(self, unit_selection):
+        # Extract model selections within the unit
         models = []
+        if unit_selection is None:
+            return models
+
+        model_selections = unit_selection.get("selections", [])
 
         for model_sel in model_selections:
             if model_sel.get("type") == "model":
@@ -79,6 +102,4 @@ class LoadUnitDataFromRoster:
                         )
                         models.append(model)
 
-        # Create Unit
-        unit = Unit(models=models, name=unit_name)
-        self.units[unit_name] = unit
+        return models

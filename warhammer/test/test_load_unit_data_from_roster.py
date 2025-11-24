@@ -4,13 +4,17 @@ import pytest
 
 from ..load_unit_data_from_roster import LoadUnitDataFromRoster
 
-datasource_path = (
+single_squad_roster_path = (
     Path(__file__).parent.parent / "test_data" / "Single_Terminator_Squad_Roster.json"
+)
+
+army_datasource_path = (
+    Path(__file__).parent.parent / "test_data" / "Test_Terminators_Roster.json"
 )
 
 
 @pytest.fixture
-def roster_loader(datasource_path=datasource_path):
+def roster_loader(datasource_path=single_squad_roster_path):
     """Initialize the loader with the path to the test roster file."""
     return LoadUnitDataFromRoster(datasource=datasource_path)
 
@@ -61,4 +65,23 @@ def test_load_terminator_squad_unit_from_roster_has_correct_model_counts(roster_
     )
     assert len(terminator_unit.models["Terminator w/ Power Fist"]) == 3, (
         "Terminator Squad should contain 3 'Terminator w/ Power Fist'"
+    )
+
+
+def test_load_army_from_roster_contains_multiple_units():
+    roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
+    assert len(roster_loader.units) == 4, (
+        "Army roster should contain exactly four units"
+    )
+    assert "Terminator Squad" in roster_loader.units, (
+        "Army roster should contain 'Terminator Squad' unit"
+    )
+    assert "Terminator Assault Squad" in roster_loader.units, (
+        "Army roster should contain 'Terminator Assault Squad' unit"
+    )
+    assert "Chaplain in Terminator Armour" in roster_loader.units, (
+        "Army roster should contain 'Chaplain in Terminator Armour' unit"
+    )
+    assert "Librarian in Terminator Armour" in roster_loader.units, (
+        "Army roster should contain 'Librarian in Terminator Armour' unit"
     )
