@@ -23,6 +23,19 @@ def bolter():
 
 
 @pytest.fixture
+def gauss_flayer():
+    return RangedWeapon(
+        name="Gauss Flayer",
+        range=24,
+        attacks=1,
+        ballistic_skill=4,
+        strength=4,
+        armour_penetration=0,
+        damage=1,
+    )
+
+
+@pytest.fixture
 def bolt_pistol():
     return RangedWeapon(
         name="Bolt Pistol",

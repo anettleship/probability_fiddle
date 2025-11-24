@@ -67,3 +67,56 @@ def test_attack_wound_probability_should_be_correct_for_space_marine(
     assert attack_action.probability_to_wound() == expected_wound_probability, (
         "Ranged attack wound probability should be correct based on strength vs toughness"
     )
+
+
+def test_armour_save_probabily_without_benefit_of_cover_for_space_marine_on_necron(
+    space_marine, necron_warrior, bolter
+):
+    attack_action = RangedAttack(
+        attacker=space_marine, target=necron_warrior, weapon=bolter
+    )
+    expected_probabilty_to_fail_save = (
+        2 / 3
+    )  # 5+ armour save on a D6 for a Necron Warrior with 4+ save and -1 AP is 2/3 chance to fail
+
+    assert (
+        attack_action.probability_to_fail_save() == expected_probabilty_to_fail_save
+    ), (
+        "Ranged attack armour save probability should be correct based on target's save and weapon's AP"
+    )
+
+
+def test_armour_save_probabily_with_benefit_of_cover_for_space_marine_on_necron(
+    space_marine, necron_warrior, bolter
+):
+    attack_action = RangedAttack(
+        attacker=space_marine, target=necron_warrior, weapon=bolter
+    )
+    expected_probabilty_to_fail_save = (
+        1 / 2
+    )  # 4+ armour save on a D6 for a Necron Warrior with 4+ save and -1 AP but +1 benefit of cover is 1/2 chance to fail
+
+    assert (
+        attack_action.probability_to_fail_save(benefit_of_cover=True)
+        == expected_probabilty_to_fail_save
+    ), (
+        "Ranged attack armour save probability should be correct based on target's save and weapon's AP"
+    )
+
+
+def test_armour_save_probabily_with_benefit_of_cover_for_necron_on_space_marine_does_not_go_below_3_plus(
+    space_marine, necron_warrior, gauss_flayer
+):
+    attack_action = RangedAttack(
+        attacker=necron_warrior, target=space_marine, weapon=gauss_flayer
+    )
+    expected_probabilty_to_fail_save = (
+        1 / 3
+    )  # 3+ armour save on a D6 for a Space Marine with 3+ save and 0 AP but +1 benefit of cover is still 1/3 chance to fail because benefit of cover cannot reduce save below a 3+
+
+    assert (
+        attack_action.probability_to_fail_save(benefit_of_cover=True)
+        == expected_probabilty_to_fail_save
+    ), (
+        "Ranged attack armour save probability should be correct based on target's save and weapon's AP"
+    )
