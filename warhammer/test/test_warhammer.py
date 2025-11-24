@@ -1,48 +1,4 @@
-import pytest
-
-from ..warhammer import MeleeWeapon, Model, RangedWeapon
-
-bolter = RangedWeapon(
-    name="Bolter",
-    range=24,
-    attacks=1,
-    ballistic_skill=4,
-    strength=4,
-    armour_penetration=-1,
-    damage=1,
-)
-bolt_pistol = RangedWeapon(
-    name="Bolt Pistol",
-    range=12,
-    attacks=1,
-    ballistic_skill=4,
-    strength=4,
-    armour_penetration=-1,
-    damage=1,
-)
-chainsword = MeleeWeapon(
-    name="Chainsword",
-    attacks=2,
-    weapon_skill=3,
-    strength=4,
-    armour_penetration=-1,
-    damage=1,
-)
-
-
-@pytest.fixture
-def space_marine():
-    return Model(
-        name="Space Marine",
-        movement=6,
-        toughness=4,
-        save=3,
-        wounds=2,
-        leadership=8,
-        objective_control=1,
-        ranged_weapons={"Bolter": bolter, "Bolt Pistol": bolt_pistol},
-        melee_weapons={"Chainsword": chainsword},
-    )
+from ..warhammer import MeleeWeapon
 
 
 def test_warhammer_model_is_alive(space_marine):
@@ -53,7 +9,7 @@ def test_warhammer_model_is_alive(space_marine):
     assert not unit.is_alive(), "Unit should not be alive when health is 0"
 
 
-def test_warhammer_model_has_properties(space_marine):
+def test_warhammer_model_has_properties(space_marine, bolter, bolt_pistol, chainsword):
     unit = space_marine
     assert unit.name == "Space Marine", "Unit name should be 'Space Marine'"
     assert unit.movement == 6, "Unit movement should be 6"
