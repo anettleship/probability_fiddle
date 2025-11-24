@@ -40,8 +40,8 @@ def space_marine():
         wounds=2,
         leadership=8,
         objective_control=1,
-        ranged_weapons=[bolter, bolt_pistol],
-        melee_weapons=[chainsword],
+        ranged_weapons={"Bolter": bolter, "Bolt Pistol": bolt_pistol},
+        melee_weapons={"Chainsword": chainsword},
     )
 
 
@@ -63,15 +63,17 @@ def test_warhammer_model_has_properties(space_marine):
     assert unit.leadership == 8, "Unit leadership should be 8"
     assert unit.objective_control == 1, "Unit objective control should be 1"
     assert unit.health == unit.wounds, "Unit health should equal wounds on creation"
-    assert unit.ranged_weapons == [bolter, bolt_pistol], (
+    assert unit.ranged_weapons == {"Bolter": bolter, "Bolt Pistol": bolt_pistol}, (
         "Unit should have correct ranged weapons"
     )
-    assert unit.melee_weapons == [chainsword], "Unit should have correct melee weapons"
+    assert unit.melee_weapons == {"Chainsword": chainsword}, (
+        "Unit should have correct melee weapons"
+    )
 
 
 def test_warhammer_weapon_properties(space_marine):
     unit = space_marine
-    weapon = [w for w in unit.ranged_weapons if w.name == "Bolter"][0]
+    weapon = unit.ranged_weapons["Bolter"]
     assert weapon.name == "Bolter", "Weapon name should be 'Bolter'"
     assert weapon.range == 24, "Weapon range should be 24"
     assert weapon.attacks == 1, "Weapon attacks should be 1"

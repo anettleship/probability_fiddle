@@ -20,7 +20,7 @@ def test_ranged_attack_action_properties():
         wounds=2,
         leadership=8,
         objective_control=1,
-        ranged_weapons=[ranged_weapon],
+        ranged_weapons={"Bolter": ranged_weapon},
     )
     target = Model(
         name="Necron Warrior",

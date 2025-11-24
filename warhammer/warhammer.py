@@ -8,8 +8,8 @@ class Model:
         wounds,
         leadership,
         objective_control,
-        ranged_weapons=list(),
-        melee_weapons=list(),
+        ranged_weapons=None,
+        melee_weapons=None,
     ):
         self.name = name
         self.movement = movement
@@ -19,8 +19,8 @@ class Model:
         self.health = wounds
         self.leadership = leadership
         self.objective_control = objective_control
-        self.ranged_weapons = ranged_weapons
-        self.melee_weapons = melee_weapons
+        self.ranged_weapons = ranged_weapons if ranged_weapons is not None else {}
+        self.melee_weapons = melee_weapons if melee_weapons is not None else {}
 
     def is_alive(self):
         return self.health > 0
