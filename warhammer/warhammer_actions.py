@@ -46,6 +46,12 @@ class Attack:
         if benefit_of_cover and modified_save > 3:
             modified_save -= 1  # Cover lowers save requirement by 1 with a floor of 3+
 
+        if (
+            self.target.invulnerable_save is not None
+            and self.target.invulnerable_save < modified_save
+        ):
+            modified_save = self.target.invulnerable_save
+
         probable_fail_outcomes = (
             modified_save - 1
         )  # e.g. a 5+ save fails on 1,2,3,4 => 4 outcomes

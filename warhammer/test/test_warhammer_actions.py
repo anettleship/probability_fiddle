@@ -55,7 +55,7 @@ def test_melee_attack_hit_probability_should_be_correct_for_space_marine(
     )
 
 
-def test_attack_wound_probability_should_be_correct_for_space_marine(
+def test_ranged_attack_wound_probability_should_be_correct_for_space_marine(
     space_marine, necron_warrior, bolter
 ):
     attack_action = RangedAttack(
@@ -66,6 +66,20 @@ def test_attack_wound_probability_should_be_correct_for_space_marine(
     )  # 4+ to wound on a D6 when Strength equals Toughness
     assert attack_action.probability_to_wound() == expected_wound_probability, (
         "Ranged attack wound probability should be correct based on strength vs toughness"
+    )
+
+
+def test_melee_attack_wound_probability_should_be_correct_for_space_marine(
+    space_marine, necron_warrior, chainsword
+):
+    attack_action = MeleeAttack(
+        attacker=space_marine, target=necron_warrior, weapon=chainsword
+    )
+    expected_wound_probability = (
+        1 / 2
+    )  # 4+ to wound on a D6 when Strength equals Toughness
+    assert attack_action.probability_to_wound() == expected_wound_probability, (
+        "Melee attack wound probability should be correct based on strength vs toughness"
     )
 
 
@@ -119,4 +133,38 @@ def test_armour_save_probabily_with_benefit_of_cover_for_necron_on_space_marine_
         == expected_probabilty_to_fail_save
     ), (
         "Ranged attack armour save probability should be correct based on target's save and weapon's AP"
+    )
+
+
+def test_armour_save_probabily_does_not_exceed_impossible_save(
+    space_marine, necron_warrior, lascannon
+):
+    attack_action = RangedAttack(
+        attacker=space_marine, target=necron_warrior, weapon=lascannon
+    )
+    expected_probabilty_to_fail_save = 1  # 7+ armour save on a D6 for a Necron Warrior with 4+ save and -3 AP is 1.0 chance to fail because save cannot exceed impossible save
+
+    assert (
+        attack_action.probability_to_fail_save(benefit_of_cover=False)
+        == expected_probabilty_to_fail_save
+    ), (
+        "Ranged attack armour save probability should be correct based on target's save and weapon's AP"
+    )
+
+
+def test_armour_save_probabily_invulnerable_save_overrides_normal_save(
+    space_marine, terminator_with_storm_bolter, lascannon
+):
+    attack_action = RangedAttack(
+        attacker=space_marine, target=terminator_with_storm_bolter, weapon=lascannon
+    )
+    expected_probabilty_to_fail_save = (
+        1 / 2
+    )  # 4+ invulnerable save on a D6 for a Terminator when hit with a lascannon with -3 AP is better than modified save of 5+
+
+    assert (
+        attack_action.probability_to_fail_save(benefit_of_cover=False)
+        == expected_probabilty_to_fail_save
+    ), (
+        "Ranged attack armour save probability should use invulnerable save when it is better than normal save"
     )

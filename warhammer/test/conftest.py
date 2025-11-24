@@ -36,6 +36,19 @@ def gauss_flayer():
 
 
 @pytest.fixture
+def lascannon():
+    return RangedWeapon(
+        name="Lascannon",
+        range=48,
+        attacks=1,
+        ballistic_skill=3,
+        strength=9,
+        armour_penetration=-3,
+        damage=6,
+    )
+
+
+@pytest.fixture
 def bolt_pistol():
     return RangedWeapon(
         name="Bolt Pistol",
@@ -89,5 +102,101 @@ def necron_warrior():
 
 
 @pytest.fixture
-def inferus_marines_unit():
-    return Unit()
+def storm_bolter():
+    return RangedWeapon(
+        name="Storm Bolter",
+        range=24,
+        attacks=2,
+        ballistic_skill=3,
+        strength=4,
+        armour_penetration=0,
+        damage=1,
+    )
+
+
+@pytest.fixture
+def heavy_flamer():
+    return RangedWeapon(
+        name="Heavy Flamer",
+        range=12,
+        attacks=6,  # D6 attacks
+        ballistic_skill=0,  # Auto-hit weapon
+        strength=5,
+        armour_penetration=-1,
+        damage=1,
+    )
+
+
+@pytest.fixture
+def power_fist():
+    return MeleeWeapon(
+        name="Power Fist",
+        attacks=3,
+        weapon_skill=3,
+        strength=8,
+        armour_penetration=-2,
+        damage=2,
+    )
+
+
+@pytest.fixture
+def terminator_sergeant(storm_bolter, power_fist):
+    return Model(
+        name="Terminator Sergeant",
+        movement=5,
+        toughness=5,
+        save=2,
+        wounds=3,
+        leadership=6,
+        objective_control=1,
+        invulnerable_save=4,
+        ranged_weapons={"Storm Bolter": storm_bolter},
+        melee_weapons={"Power Fist": power_fist},
+    )
+
+
+@pytest.fixture
+def terminator_with_storm_bolter(storm_bolter, power_fist):
+    return Model(
+        name="Terminator w/ Storm Bolter",
+        movement=5,
+        toughness=5,
+        save=2,
+        wounds=3,
+        leadership=6,
+        objective_control=1,
+        invulnerable_save=4,
+        ranged_weapons={"Storm Bolter": storm_bolter},
+        melee_weapons={"Power Fist": power_fist},
+    )
+
+
+@pytest.fixture
+def terminator_with_heavy_flamer(heavy_flamer, power_fist):
+    return Model(
+        name="Terminator w/ Heavy Flamer",
+        movement=5,
+        toughness=5,
+        save=2,
+        wounds=3,
+        leadership=6,
+        objective_control=1,
+        invulnerable_save=4,
+        ranged_weapons={"Heavy Flamer": heavy_flamer},
+        melee_weapons={"Power Fist": power_fist},
+    )
+
+
+@pytest.fixture
+def terminator_squad(
+    terminator_sergeant, terminator_with_storm_bolter, terminator_with_heavy_flamer
+):
+    """5-man Terminator squad: 1 Sergeant, 3 with storm bolters, 1 with heavy flamer"""
+    models = [
+        terminator_sergeant,
+        terminator_with_storm_bolter,
+        terminator_with_storm_bolter,
+        terminator_with_storm_bolter,
+        terminator_with_heavy_flamer,
+    ]
+    return Unit(models=models, name="Terminator Squad")

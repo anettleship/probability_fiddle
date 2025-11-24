@@ -23,6 +23,7 @@ chaplain_expected_data = {
         "wounds": 5,
         "leadership": 5,
         "objective_control": 1,
+        "invulnerable_save": 4,
     },
 }
 
@@ -36,6 +37,7 @@ librarian_expected_data = {
         "wounds": 5,
         "leadership": 6,
         "objective_control": 1,
+        "invulnerable_save": 4,
     },
 }
 
@@ -53,6 +55,7 @@ assault_squad_expected_data = {
         "wounds": 3,
         "leadership": 6,
         "objective_control": 1,
+        "invulnerable_save": 4,
     },
 }
 
@@ -83,6 +86,7 @@ def test_load_terminator_squad_unit_from_roster_models_have_correct_attributes(
         assert model.wounds == 3, "Terminator wounds should be 3"
         assert model.leadership == 6, "Terminator leadership should be 6+"
         assert model.objective_control == 1, "Terminator objective control should be 1"
+        assert model.invulnerable_save == 4, "Terminator invulnerable save should be 4+"
         assert model.is_alive(), "Terminator should be alive"
 
 
@@ -142,6 +146,10 @@ def test_chaplain_in_terminator_armour_properties():
         assert model.movement == chaplain_expected_data["stats"]["movement"]
         assert model.toughness == chaplain_expected_data["stats"]["toughness"]
         assert model.save == chaplain_expected_data["stats"]["save"]
+        assert (
+            model.invulnerable_save
+            == chaplain_expected_data["stats"]["invulnerable_save"]
+        )
         assert model.wounds == chaplain_expected_data["stats"]["wounds"]
         assert model.leadership == chaplain_expected_data["stats"]["leadership"]
         assert (
@@ -162,6 +170,10 @@ def test_librarian_in_terminator_armour_properties():
         assert model.movement == librarian_expected_data["stats"]["movement"]
         assert model.toughness == librarian_expected_data["stats"]["toughness"]
         assert model.save == librarian_expected_data["stats"]["save"]
+        assert (
+            model.invulnerable_save
+            == librarian_expected_data["stats"]["invulnerable_save"]
+        )
         assert model.wounds == librarian_expected_data["stats"]["wounds"]
         assert model.leadership == librarian_expected_data["stats"]["leadership"]
         assert (
@@ -190,6 +202,10 @@ def test_terminator_assault_squad_properties():
         assert model.movement == assault_squad_expected_data["stats"]["movement"]
         assert model.toughness == assault_squad_expected_data["stats"]["toughness"]
         assert model.save == assault_squad_expected_data["stats"]["save"]
+        assert (
+            model.invulnerable_save
+            == assault_squad_expected_data["stats"]["invulnerable_save"]
+        )
         assert model.wounds == assault_squad_expected_data["stats"]["wounds"]
         assert model.leadership == assault_squad_expected_data["stats"]["leadership"]
         assert (

@@ -8,6 +8,8 @@ class Model:
         wounds,
         leadership,
         objective_control,
+        invulnerable_save=None,
+        feel_no_pain=None,
         ranged_weapons=None,
         melee_weapons=None,
     ):
@@ -19,6 +21,8 @@ class Model:
         self.health = wounds
         self.leadership = leadership
         self.objective_control = objective_control
+        self.invulnerable_save = invulnerable_save
+        self.feel_no_pain = feel_no_pain
         self.ranged_weapons = ranged_weapons if ranged_weapons is not None else {}
         self.melee_weapons = melee_weapons if melee_weapons is not None else {}
 

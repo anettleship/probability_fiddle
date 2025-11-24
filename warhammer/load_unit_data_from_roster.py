@@ -59,10 +59,19 @@ class LoadUnitDataFromRoster:
 
         profiles = selection.get("profiles", [])
         model_profile = None
+        invulnerable_save = None
+
         for profile in profiles:
             if profile.get("typeName") == "Unit":
                 model_profile = profile
-                break
+            elif (
+                profile.get("typeName") == "Abilities"
+                and profile.get("name") == "Invulnerable Save"
+            ):
+                chars = profile.get("characteristics", [])
+                if chars:
+                    inv_text = chars[0].get("$text", "")
+                    invulnerable_save = int(inv_text.replace("+", ""))
 
         models = []
         if model_profile:
@@ -78,6 +87,7 @@ class LoadUnitDataFromRoster:
                 wounds=int(characteristics.get("W", "0")),
                 leadership=int(characteristics.get("LD", "0").replace("+", "")),
                 objective_control=int(characteristics.get("OC", "0")),
+                invulnerable_save=invulnerable_save,
             )
             models.append(model)
 
@@ -104,19 +114,43 @@ class LoadUnitDataFromRoster:
         if unit_selection is None:
             return models
 
+        # Check for unit-level invulnerable save
+        unit_invulnerable_save = None
+        unit_profiles = unit_selection.get("profiles", [])
+        for profile in unit_profiles:
+            if (
+                profile.get("typeName") == "Abilities"
+                and profile.get("name") == "Invulnerable Save"
+            ):
+                chars = profile.get("characteristics", [])
+                if chars:
+                    inv_text = chars[0].get("$text", "")
+                    unit_invulnerable_save = int(inv_text.replace("+", ""))
+
         model_selections = unit_selection.get("selections", [])
 
         for model_sel in model_selections:
             if model_sel.get("type") == "model":
                 model_count = model_sel.get("number", 1)
 
-                # Get model profile
+                # Get model profile and invulnerable save
                 model_profiles = model_sel.get("profiles", [])
                 model_profile = None
+                model_invulnerable_save = (
+                    unit_invulnerable_save  # Default to unit-level
+                )
+
                 for profile in model_profiles:
                     if profile.get("typeName") == "Unit":
                         model_profile = profile
-                        break
+                    elif (
+                        profile.get("typeName") == "Abilities"
+                        and profile.get("name") == "Invulnerable Save"
+                    ):
+                        chars = profile.get("characteristics", [])
+                        if chars:
+                            inv_text = chars[0].get("$text", "")
+                            model_invulnerable_save = int(inv_text.replace("+", ""))
 
                 if model_profile:
                     chars = model_profile.get("characteristics", [])
@@ -136,6 +170,7 @@ class LoadUnitDataFromRoster:
                                 characteristics.get("LD", "0").replace("+", "")
                             ),
                             objective_control=int(characteristics.get("OC", "0")),
+                            invulnerable_save=model_invulnerable_save,
                         )
                         models.append(model)
 
