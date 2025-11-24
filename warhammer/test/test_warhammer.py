@@ -1,8 +1,38 @@
+import pytest
+
 from ..warhammer import MeleeWeapon, Model, RangedWeapon
 
+bolter = RangedWeapon(
+    name="Bolter",
+    range=24,
+    attacks=1,
+    ballistic_skill=4,
+    strength=4,
+    armour_penetration=-1,
+    damage=1,
+)
+bolt_pistol = RangedWeapon(
+    name="Bolt Pistol",
+    range=12,
+    attacks=1,
+    ballistic_skill=4,
+    strength=4,
+    armour_penetration=-1,
+    damage=1,
+)
+chainsword = MeleeWeapon(
+    name="Chainsword",
+    attacks=2,
+    weapon_skill=3,
+    strength=4,
+    armour_penetration=-1,
+    damage=1,
+)
 
-def test_warhammer_model_is_alive():
-    unit = Model(
+
+@pytest.fixture
+def space_marine():
+    return Model(
         name="Space Marine",
         movement=6,
         toughness=4,
@@ -10,23 +40,21 @@ def test_warhammer_model_is_alive():
         wounds=2,
         leadership=8,
         objective_control=1,
+        ranged_weapons=[bolter, bolt_pistol],
+        melee_weapons=[chainsword],
     )
+
+
+def test_warhammer_model_is_alive(space_marine):
+    unit = space_marine
     assert unit.is_alive(), "Unit should be alive when health is greater than 0"
 
     unit.health = 0
     assert not unit.is_alive(), "Unit should not be alive when health is 0"
 
 
-def test_warhammer_model_has_properties():
-    unit = Model(
-        name="Space Marine",
-        movement=6,
-        toughness=4,
-        save=3,
-        wounds=2,
-        leadership=8,
-        objective_control=1,
-    )
+def test_warhammer_model_has_properties(space_marine):
+    unit = space_marine
     assert unit.name == "Space Marine", "Unit name should be 'Space Marine'"
     assert unit.movement == 6, "Unit movement should be 6"
     assert unit.toughness == 4, "Unit toughness should be 4"
@@ -35,18 +63,15 @@ def test_warhammer_model_has_properties():
     assert unit.leadership == 8, "Unit leadership should be 8"
     assert unit.objective_control == 1, "Unit objective control should be 1"
     assert unit.health == unit.wounds, "Unit health should equal wounds on creation"
-
-
-def test_warhammer_weapon_properties():
-    weapon = RangedWeapon(
-        name="Bolter",
-        range=24,
-        attacks=1,
-        ballistic_skill=4,
-        strength=4,
-        armour_penetration=-1,
-        damage=1,
+    assert unit.ranged_weapons == [bolter, bolt_pistol], (
+        "Unit should have correct ranged weapons"
     )
+    assert unit.melee_weapons == [chainsword], "Unit should have correct melee weapons"
+
+
+def test_warhammer_weapon_properties(space_marine):
+    unit = space_marine
+    weapon = [w for w in unit.ranged_weapons if w.name == "Bolter"][0]
     assert weapon.name == "Bolter", "Weapon name should be 'Bolter'"
     assert weapon.range == 24, "Weapon range should be 24"
     assert weapon.attacks == 1, "Weapon attacks should be 1"
