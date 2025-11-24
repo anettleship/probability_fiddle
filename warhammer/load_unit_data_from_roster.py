@@ -34,19 +34,33 @@ class LoadUnitDataFromRoster:
 
     def _process_model(self, selection):
         """Used for processing characters who appear separately to a unit"""
-        # This method can be expanded if individual models need to be processed
         model_name = selection.get("name")
 
         profiles = selection.get("profiles", [])
-        model_selection = None
+        model_profile = None
         for profile in profiles:
             if profile.get("typeName") == "Unit":
-                model_selection = profile
+                model_profile = profile
                 break
 
-        models = self._extract_models(model_selection)
+        models = []
+        if model_profile:
+            chars = model_profile.get("characteristics", [])
+            characteristics = {c["name"]: c["$text"] for c in chars}
 
-        # Create Unit
+            # Create single model from characteristics
+            model = Model(
+                name=model_name,
+                movement=int(characteristics.get("M", "0").replace('"', "")),
+                toughness=int(characteristics.get("T", "0")),
+                save=int(characteristics.get("SV", "0").replace("+", "")),
+                wounds=int(characteristics.get("W", "0")),
+                leadership=int(characteristics.get("LD", "0").replace("+", "")),
+                objective_control=int(characteristics.get("OC", "0")),
+            )
+            models.append(model)
+
+        # Create Unit (even though it's a single character model)
         unit = Unit(models=models, name=model_name)
         self.units[model_name] = unit
 

@@ -12,6 +12,50 @@ army_datasource_path = (
     Path(__file__).parent.parent / "test_data" / "Test_Terminators_Roster.json"
 )
 
+# Expected data for units in Test_Terminators_Roster.json
+chaplain_expected_data = {
+    "name": "Chaplain in Terminator Armour",
+    "model_count": 1,
+    "stats": {
+        "movement": 5,
+        "toughness": 5,
+        "save": 2,
+        "wounds": 5,
+        "leadership": 5,
+        "objective_control": 1,
+    },
+}
+
+librarian_expected_data = {
+    "name": "Librarian in Terminator Armour",
+    "model_count": 1,
+    "stats": {
+        "movement": 5,
+        "toughness": 5,
+        "save": 2,
+        "wounds": 5,
+        "leadership": 6,
+        "objective_control": 1,
+    },
+}
+
+assault_squad_expected_data = {
+    "name": "Terminator Assault Squad",
+    "model_count": 5,
+    "model_types": {
+        "Assault Terminator Sergeant": 1,
+        "Assault Terminator w/ Twin Lightning Claws": 4,
+    },
+    "stats": {
+        "movement": 5,
+        "toughness": 5,
+        "save": 2,
+        "wounds": 3,
+        "leadership": 6,
+        "objective_control": 1,
+    },
+}
+
 
 @pytest.fixture
 def roster_loader(datasource_path=single_squad_roster_path):
@@ -85,3 +129,71 @@ def test_load_army_from_roster_contains_multiple_units():
     assert "Librarian in Terminator Armour" in roster_loader.units, (
         "Army roster should contain 'Librarian in Terminator Armour' unit"
     )
+
+
+def test_chaplain_in_terminator_armour_properties():
+    roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
+    chaplain = roster_loader.units[chaplain_expected_data["name"]]
+
+    all_models = chaplain.all_models()
+    assert len(all_models) == chaplain_expected_data["model_count"]
+
+    for model in all_models:
+        assert model.movement == chaplain_expected_data["stats"]["movement"]
+        assert model.toughness == chaplain_expected_data["stats"]["toughness"]
+        assert model.save == chaplain_expected_data["stats"]["save"]
+        assert model.wounds == chaplain_expected_data["stats"]["wounds"]
+        assert model.leadership == chaplain_expected_data["stats"]["leadership"]
+        assert (
+            model.objective_control
+            == chaplain_expected_data["stats"]["objective_control"]
+        )
+        assert model.is_alive()
+
+
+def test_librarian_in_terminator_armour_properties():
+    roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
+    librarian = roster_loader.units[librarian_expected_data["name"]]
+
+    all_models = librarian.all_models()
+    assert len(all_models) == librarian_expected_data["model_count"]
+
+    for model in all_models:
+        assert model.movement == librarian_expected_data["stats"]["movement"]
+        assert model.toughness == librarian_expected_data["stats"]["toughness"]
+        assert model.save == librarian_expected_data["stats"]["save"]
+        assert model.wounds == librarian_expected_data["stats"]["wounds"]
+        assert model.leadership == librarian_expected_data["stats"]["leadership"]
+        assert (
+            model.objective_control
+            == librarian_expected_data["stats"]["objective_control"]
+        )
+        assert model.is_alive()
+
+
+def test_terminator_assault_squad_properties():
+    roster_loader = LoadUnitDataFromRoster(datasource=army_datasource_path)
+    assault_squad = roster_loader.units[assault_squad_expected_data["name"]]
+
+    all_models = assault_squad.all_models()
+    assert len(all_models) == assault_squad_expected_data["model_count"]
+
+    # Verify model type composition
+    for model_type, expected_count in assault_squad_expected_data[
+        "model_types"
+    ].items():
+        assert model_type in assault_squad.model_types()
+        assert len(assault_squad.models[model_type]) == expected_count
+
+    # Verify all models have correct stats
+    for model in all_models:
+        assert model.movement == assault_squad_expected_data["stats"]["movement"]
+        assert model.toughness == assault_squad_expected_data["stats"]["toughness"]
+        assert model.save == assault_squad_expected_data["stats"]["save"]
+        assert model.wounds == assault_squad_expected_data["stats"]["wounds"]
+        assert model.leadership == assault_squad_expected_data["stats"]["leadership"]
+        assert (
+            model.objective_control
+            == assault_squad_expected_data["stats"]["objective_control"]
+        )
+        assert model.is_alive()
