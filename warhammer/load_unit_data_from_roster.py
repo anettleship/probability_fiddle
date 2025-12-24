@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 from .warhammer import Unit
@@ -5,24 +7,24 @@ from .warhammer_base import MeleeWeapon, Model, RangedWeapon
 
 
 class LoadUnitDataFromRoster:
-    def __init__(self, datasource):
+    def __init__(self, datasource: str) -> None:
         self.datasource = datasource
-        self.units = {}  # Dict with unique keys for easy lookup
-        self._unit_name_counters = {}  # Track duplicate names
+        self.units: dict[str, Unit] = {}  # Dict with unique keys for easy lookup
+        self._unit_name_counters: dict[str, int] = {}  # Track duplicate names
         self._load_roster()
 
-    def get_unit(self, name):
+    def get_unit(self, name: str) -> Unit | None:
         """Get a unit by name. Returns first unit with matching name."""
         for key, unit in self.units.items():
             if unit.name == name:
                 return unit
         return None
 
-    def get_units_by_name(self, name):
+    def get_units_by_name(self, name: str) -> list[Unit]:
         """Get all units with matching name (useful for duplicates like Deff Dreads)."""
         return [unit for unit in self.units.values() if unit.name == name]
 
-    def _generate_unique_key(self, unit_name):
+    def _generate_unique_key(self, unit_name: str) -> str:
         """Generate unique key for unit, handling duplicates."""
         if unit_name not in self._unit_name_counters:
             self._unit_name_counters[unit_name] = 0
@@ -31,7 +33,7 @@ class LoadUnitDataFromRoster:
             self._unit_name_counters[unit_name] += 1
             return f"{unit_name}_{self._unit_name_counters[unit_name]}"
 
-    def _load_roster(self):
+    def _load_roster(self) -> None:
         """Load and parse the roster JSON file."""
         with open(self.datasource, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -54,7 +56,7 @@ class LoadUnitDataFromRoster:
             if selection.get("type") == "unit":
                 self._process_unit(selection)
 
-    def _process_model(self, selection):
+    def _process_model(self, selection: dict) -> None:
         """Used for processing characters who appear separately to a unit"""
         model_name = selection.get("name")
 
@@ -102,7 +104,7 @@ class LoadUnitDataFromRoster:
         unique_key = self._generate_unique_key(model_name)
         self.units[unique_key] = unit
 
-    def _process_unit(self, unit_selection):
+    def _process_unit(self, unit_selection: dict) -> None:
         """Process a unit selection and create Unit with Models."""
         unit_name = unit_selection.get("name")
 
@@ -114,7 +116,7 @@ class LoadUnitDataFromRoster:
         unique_key = self._generate_unique_key(unit_name)
         self.units[unique_key] = unit
 
-    def _extract_models(self, unit_selection):
+    def _extract_models(self, unit_selection: dict | None) -> list[Model]:
         # Extract model selections within the unit
         models = []
         if unit_selection is None:
@@ -187,7 +189,7 @@ class LoadUnitDataFromRoster:
 
         return models
 
-    def _extract_weapons(self, selection):
+    def _extract_weapons(self, selection: dict) -> tuple[dict[str, RangedWeapon], dict[str, MeleeWeapon]]:
         """Extract weapons from a selection (model or unit)."""
         ranged_weapons = {}
         melee_weapons = {}
@@ -259,7 +261,7 @@ class LoadUnitDataFromRoster:
 
         return ranged_weapons, melee_weapons
 
-    def _parse_attacks(self, attacks_str):
+    def _parse_attacks(self, attacks_str: str) -> int:
         """Parse attacks value (handle D6, 2D6, etc.)."""
         # For now, return simple integer or average for dice
         if "D6" in attacks_str.upper():

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .warhammer_base import MeleeWeapon, Model, RangedWeapon
 
 
@@ -15,12 +17,12 @@ class Attack:
             * self.probability_to_fail_save()
         )
 
-    def probability_to_hit(self):
+    def probability_to_hit(self) -> float:
         raise NotImplementedError(
             "Subclasses must implement probability_to_hit method."
         )
 
-    def _calculate_wound_roll_required(self):
+    def _calculate_wound_roll_required(self) -> int:
         """Calculate the required wound roll based on weapon strength vs target toughness."""
         strength = self.weapon.strength
         toughness = self.target.toughness
@@ -36,7 +38,7 @@ class Attack:
         else:
             return 5
 
-    def _calculate_wound_probability_with_lethal_hits(self):
+    def _calculate_wound_probability_with_lethal_hits(self) -> float:
         """Calculate wound probability when weapon has Lethal Hits keyword."""
         # Get hit skill to determine critical vs normal hits
         if hasattr(self.weapon, "ballistic_skill"):
@@ -70,7 +72,7 @@ class Attack:
             normal_hit_probability * normal_wound_probability
         )
 
-    def probability_to_wound_successful_outcomes(self):
+    def probability_to_wound_successful_outcomes(self) -> set[int]:
         if self.weapon is None:
             raise NotImplementedError(
                 "Weapon must be defined in subclass to calculate wound probability."
@@ -79,7 +81,7 @@ class Attack:
         required_roll = self._calculate_wound_roll_required()
         return set(range(required_roll, 7))  # e.g., for 4+, returns {4, 5, 6}
 
-    def probability_to_wound(self):
+    def probability_to_wound(self) -> float:
         if self.weapon is None:
             raise NotImplementedError(
                 "Weapon must be defined in subclass to calculate wound probability."
@@ -117,7 +119,7 @@ class Attack:
 
         return modified_save
 
-    def probability_to_fail_save_outcomes(self):
+    def probability_to_fail_save_outcomes(self) -> set[int]:
         modified_save = self._calculate_modified_save()
         # Failed save outcomes: e.g., 5+ save fails on 1,2,3,4 => {1, 2, 3, 4}
         if modified_save > 6:
@@ -143,13 +145,13 @@ class RangedAttack(Attack):
         super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
 
-    def probability_to_hit_successful_outcomes(self):
+    def probability_to_hit_successful_outcomes(self) -> set[int]:
         required_roll = self.weapon.ballistic_skill
         if required_roll == 0:
             return {1, 2, 3, 4, 5, 6}  # Auto-hit weapon hits on all rolls
         return set(range(required_roll, 7))  # e.g., for 4+, returns {4, 5, 6}
 
-    def probability_to_hit(self):
+    def probability_to_hit(self) -> float:
         successful_outcomes = self.probability_to_hit_successful_outcomes()
         return len(successful_outcomes) / 6
 
@@ -174,11 +176,11 @@ class MeleeAttack(Attack):
         super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
 
-    def probability_to_hit_successful_outcomes(self):
+    def probability_to_hit_successful_outcomes(self) -> set[int]:
         required_roll = self.weapon.weapon_skill
         return set(range(required_roll, 7))  # e.g., for 3+, returns {3, 4, 5, 6}
 
-    def probability_to_hit(self):
+    def probability_to_hit(self) -> float:
         successful_outcomes = self.probability_to_hit_successful_outcomes()
         return len(successful_outcomes) / 6
 

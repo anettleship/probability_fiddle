@@ -1,18 +1,21 @@
+from __future__ import annotations
+
+
 class Model:
     def __init__(
         self,
-        name,
-        movement,
-        toughness,
-        save,
-        wounds,
-        leadership,
-        objective_control,
-        invulnerable_save=None,
-        feel_no_pain=None,
-        ranged_weapons=None,
-        melee_weapons=None,
-    ):
+        name: str,
+        movement: int,
+        toughness: int,
+        save: int,
+        wounds: int,
+        leadership: int,
+        objective_control: int,
+        invulnerable_save: int | None = None,
+        feel_no_pain: int | None = None,
+        ranged_weapons: dict | None = None,
+        melee_weapons: dict | None = None,
+    ) -> None:
         self.name = name
         self.movement = movement
         self.toughness = toughness
@@ -26,17 +29,23 @@ class Model:
         self.ranged_weapons = ranged_weapons if ranged_weapons is not None else {}
         self.melee_weapons = melee_weapons if melee_weapons is not None else {}
 
-    def is_alive(self):
+    def is_alive(self) -> bool:
         return self.health > 0
 
-    def health(self):
+    def health(self) -> int:
         return self.health
 
 
 class Weapon:
     def __init__(
-        self, name, attacks, strength, armour_penetration, damage, keywords=None
-    ):
+        self,
+        name: str,
+        attacks: int,
+        strength: int,
+        armour_penetration: int,
+        damage: int,
+        keywords: list[str] | None = None,
+    ) -> None:
         self.name = name
         self.attacks = attacks
         self.strength = strength
@@ -48,15 +57,15 @@ class Weapon:
 class RangedWeapon(Weapon):
     def __init__(
         self,
-        name,
-        range,
-        attacks,
-        ballistic_skill,
-        strength,
-        armour_penetration,
-        damage,
-        keywords=None,
-    ):
+        name: str,
+        range: int,
+        attacks: int,
+        ballistic_skill: int,
+        strength: int,
+        armour_penetration: int,
+        damage: int,
+        keywords: list[str] | None = None,
+    ) -> None:
         super().__init__(name, attacks, strength, armour_penetration, damage, keywords)
         self.range = range
         self.ballistic_skill = ballistic_skill
@@ -65,13 +74,13 @@ class RangedWeapon(Weapon):
 class MeleeWeapon(Weapon):
     def __init__(
         self,
-        name,
-        attacks,
-        weapon_skill,
-        strength,
-        armour_penetration,
-        damage,
-        keywords=None,
-    ):
+        name: str,
+        attacks: int,
+        weapon_skill: int,
+        strength: int,
+        armour_penetration: int,
+        damage: int,
+        keywords: list[str] | None = None,
+    ) -> None:
         super().__init__(name, attacks, strength, armour_penetration, damage, keywords)
         self.weapon_skill = weapon_skill

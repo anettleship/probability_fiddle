@@ -8,12 +8,12 @@ from .probability_objects import DiceRoll
 class WeaponResult:
     def __init__(
         self,
-        weapon_name,
-        attacks,
-        expected_hits,
-        expected_wounds,
-        expected_damage,
-    ):
+        weapon_name: str,
+        attacks: int,
+        expected_hits: float,
+        expected_wounds: float,
+        expected_damage: float,
+    ) -> None:
         self.weapon_name = weapon_name
         self.attacks = attacks
         self.expected_hits = expected_hits
@@ -22,13 +22,13 @@ class WeaponResult:
 
 
 class ShootingResult:
-    def __init__(self, weapon_results):
+    def __init__(self, weapon_results: list[WeaponResult]) -> None:
         self.weapon_results = weapon_results
         self.total_expected_damage = sum(wr.expected_damage for wr in weapon_results)
 
 
 class Unit:
-    def __init__(self, models: list[Model], name: str):
+    def __init__(self, models: list[Model], name: str) -> None:
         # Group models by their name (type)
         self.models = {}
         for model in models:
@@ -37,11 +37,11 @@ class Unit:
             self.models[model.name].append(model)
         self.name = name
 
-    def model_types(self):
+    def model_types(self) -> set[str]:
         """Return the set of model type names in this unit."""
         return set(self.models.keys())
 
-    def all_models(self):
+    def all_models(self) -> list[Model]:
         """Return a flat list of all models in the unit."""
         result = []
         for model_list in self.models.values():
@@ -49,8 +49,8 @@ class Unit:
         return result
 
     def _calculate_weapon_expected_damage(
-        self, weapon, total_attacks, target_model, attacker_model
-    ):
+        self, weapon, total_attacks: int, target_model: Model, attacker_model: Model
+    ) -> tuple[float, float, float]:
         """Calculate expected hits, wounds, and damage for a weapon."""
         attack = RangedAttack(
             attacker=attacker_model,
@@ -68,7 +68,7 @@ class Unit:
 
         return expected_hits, expected_wounds, expected_damage
 
-    def shoot_at_return_probability(self, target_unit):
+    def shoot_at_return_probability(self, target_unit: Unit) -> ShootingResult:
         """Calculate expected damage from all ranged weapons firing at target unit."""
 
         # Aggregate weapons across all models
@@ -118,7 +118,7 @@ class Unit:
 
         return ShootingResult(weapon_results)
 
-    def shoot_at_simulation(self, target_unit):
+    def shoot_at_simulation(self, target_unit: Unit) -> dict[str, list]:
         """Simulate shooting by rolling dice for each attack."""
         dice = DiceRoll(sides=6)
         
@@ -179,7 +179,7 @@ class Unit:
         
         return result
 
-    def melee_attack_simulation(self, target_unit: Unit):
+    def melee_attack_simulation(self, target_unit: Unit) -> dict[str, list]:
         """Simulate melee attacks by rolling dice for each attack."""
         dice = DiceRoll(sides=6)
         
