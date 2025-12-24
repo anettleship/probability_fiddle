@@ -70,6 +70,15 @@ class Attack:
             normal_hit_probability * normal_wound_probability
         )
 
+    def probability_to_wound_successful_outcomes(self):
+        if self.weapon is None:
+            raise NotImplementedError(
+                "Weapon must be defined in subclass to calculate wound probability."
+            )
+
+        required_roll = self._calculate_wound_roll_required()
+        return set(range(required_roll, 7))  # e.g., for 4+, returns {4, 5, 6}
+
     def probability_to_wound(self):
         if self.weapon is None:
             raise NotImplementedError(
@@ -81,11 +90,11 @@ class Attack:
             return self._calculate_wound_probability_with_lethal_hits()
 
         # Standard wound calculation (no Lethal Hits)
-        required_roll = self._calculate_wound_roll_required()
-        successful_outcomes = 7 - required_roll
-        return successful_outcomes / 6
+        successful_outcomes = self.probability_to_wound_successful_outcomes()
+        return len(successful_outcomes) / 6
 
-    def probability_to_fail_save(self) -> float:
+    def _calculate_modified_save(self) -> int:
+        """Calculate the modified save value after AP, cover, and invuln."""
         if self.weapon is None:
             raise NotImplementedError(
                 "Weapon must be defined in subclass to calculate save probability."
@@ -106,10 +115,18 @@ class Attack:
         ):
             modified_save = self.target.invulnerable_save
 
-        probable_fail_outcomes = (
-            modified_save - 1
-        )  # e.g. a 5+ save fails on 1,2,3,4 => 4 outcomes
-        return probable_fail_outcomes / 6
+        return modified_save
+
+    def probability_to_fail_save_outcomes(self):
+        modified_save = self._calculate_modified_save()
+        # Failed save outcomes: e.g., 5+ save fails on 1,2,3,4 => {1, 2, 3, 4}
+        if modified_save > 6:
+            return {1, 2, 3, 4, 5, 6}  # Impossible save, all rolls fail
+        return set(range(1, modified_save))
+
+    def probability_to_fail_save(self) -> float:
+        successful_outcomes = self.probability_to_fail_save_outcomes()
+        return len(successful_outcomes) / 6
 
     def apply_benefit_of_cover(self, modified_save: int) -> int:
         return modified_save
