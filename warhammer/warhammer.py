@@ -1,4 +1,4 @@
-from .warhammer_actions import RangedAttack
+from .warhammer_actions import RangedAttack, MeleeAttack
 from .warhammer_base import Model
 
 
@@ -114,3 +114,129 @@ class Unit:
             weapon_results.append(weapon_result)
 
         return ShootingResult(weapon_results)
+
+    def shoot_at_simulation(self, target_unit):
+        """Simulate shooting by rolling dice for each attack."""
+        from .probability_objects import DiceRoll
+        
+        dice = DiceRoll(sides=6)
+        
+        # Initialize result dictionary
+        result = {
+            "hit_rolls": [],
+            "successful_hits": [],
+            "wound_rolls": [],
+            "successful_wounds": [],
+            "save_rolls": [],
+            "successful_damage": [],
+            "damage_to_unit": []
+        }
+        
+        # Aggregate weapons across all models
+        target_model = target_unit.all_models()[0]
+        attacker_model = self.all_models()[0]
+        
+        for model in self.all_models():
+            for weapon_name, weapon in model.ranged_weapons.items():
+                # Create attack for this weapon
+                attack = RangedAttack(
+                    attacker=attacker_model,
+                    target=target_model,
+                    weapon=weapon,
+                )
+                
+                # Get successful outcome sets
+                hit_outcomes = attack.probability_to_hit_successful_outcomes()
+                wound_outcomes = attack.probability_to_wound_successful_outcomes()
+                fail_save_outcomes = attack.probability_to_fail_save_outcomes()
+                
+                # Roll to hit for each attack
+                for _ in range(weapon.attacks):
+                    hit_roll = dice.roll()
+                    result["hit_rolls"].append(hit_roll)
+                    
+                    # Check if hit was successful
+                    if hit_roll in hit_outcomes:
+                        result["successful_hits"].append(hit_roll)
+                        
+                        # Roll to wound
+                        wound_roll = dice.roll()
+                        result["wound_rolls"].append(wound_roll)
+                        
+                        # Check if wound was successful
+                        if wound_roll in wound_outcomes:
+                            result["successful_wounds"].append(wound_roll)
+                            
+                            # Roll save
+                            save_roll = dice.roll()
+                            result["save_rolls"].append(save_roll)
+                            
+                            # Check if save failed (damage dealt)
+                            if save_roll in fail_save_outcomes:
+                                result["successful_damage"].append(save_roll)
+                                result["damage_to_unit"].append(weapon.damage)
+        
+        return result
+
+    def melee_attack_simulation(self, target_unit):
+        """Simulate melee attacks by rolling dice for each attack."""
+        from .probability_objects import DiceRoll
+        
+        dice = DiceRoll(sides=6)
+        
+        # Initialize result dictionary
+        result = {
+            "hit_rolls": [],
+            "successful_hits": [],
+            "wound_rolls": [],
+            "successful_wounds": [],
+            "save_rolls": [],
+            "successful_damage": [],
+            "damage_to_unit": []
+        }
+        
+        # Aggregate weapons across all models
+        target_model = target_unit.all_models()[0]
+        attacker_model = self.all_models()[0]
+        
+        for model in self.all_models():
+            for weapon_name, weapon in model.melee_weapons.items():
+                # Create attack for this weapon
+                attack = MeleeAttack(
+                    attacker=attacker_model,
+                    target=target_model,
+                    weapon=weapon,
+                )
+                
+                # Get successful outcome sets
+                hit_outcomes = attack.probability_to_hit_successful_outcomes()
+                wound_outcomes = attack.probability_to_wound_successful_outcomes()
+                fail_save_outcomes = attack.probability_to_fail_save_outcomes()
+                
+                # Roll to hit for each attack
+                for _ in range(weapon.attacks):
+                    hit_roll = dice.roll()
+                    result["hit_rolls"].append(hit_roll)
+                    
+                    # Check if hit was successful
+                    if hit_roll in hit_outcomes:
+                        result["successful_hits"].append(hit_roll)
+                        
+                        # Roll to wound
+                        wound_roll = dice.roll()
+                        result["wound_rolls"].append(wound_roll)
+                        
+                        # Check if wound was successful
+                        if wound_roll in wound_outcomes:
+                            result["successful_wounds"].append(wound_roll)
+                            
+                            # Roll save
+                            save_roll = dice.roll()
+                            result["save_rolls"].append(save_roll)
+                            
+                            # Check if save failed (damage dealt)
+                            if save_roll in fail_save_outcomes:
+                                result["successful_damage"].append(save_roll)
+                                result["damage_to_unit"].append(weapon.damage)
+        
+        return result

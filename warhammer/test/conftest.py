@@ -69,6 +69,18 @@ def chainsword():
 
 
 @pytest.fixture
+def close_combat_weapon():
+    return MeleeWeapon(
+        name="Close combat weapon",
+        attacks=1,
+        weapon_skill=4,
+        strength=4,
+        armour_penetration=0,
+        damage=1,
+    )
+
+
+@pytest.fixture
 def space_marine(bolter, bolt_pistol, chainsword):
     return Model(
         name="Space Marine",
@@ -84,7 +96,7 @@ def space_marine(bolter, bolt_pistol, chainsword):
 
 
 @pytest.fixture
-def necron_warrior():
+def necron_warrior(gauss_flayer, close_combat_weapon):
     return Model(
         name="Necron Warrior",
         movement=5,
@@ -93,6 +105,8 @@ def necron_warrior():
         wounds=1,
         leadership=7,
         objective_control=2,
+        ranged_weapons={"Gauss Flayer": gauss_flayer},
+        melee_weapons={"Close combat weapon": close_combat_weapon},
     )
 
 

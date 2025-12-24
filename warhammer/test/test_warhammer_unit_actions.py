@@ -1,3 +1,8 @@
+import pytest
+
+from ..warhammer import Unit
+
+
 def test_unit_can_shoot_single_weapon_type_at_target(
     terminator_with_storm_bolter, necron_warrior_unit
 ):
@@ -5,8 +10,6 @@ def test_unit_can_shoot_single_weapon_type_at_target(
     # Storm Bolter: 2 attacks, BS 3+, S4, AP0, D1
     # Expected: attacks × P(hit) × P(wound) × P(fail_save) × damage
     # = 2 × (2/3) × (1/2) × (1/2) × 1 = 1/3
-
-    from warhammer import Unit
 
     single_terminator_unit = Unit(
         models=[terminator_with_storm_bolter], name="Single Terminator"
@@ -64,3 +67,75 @@ def test_unit_ranged_attacked_probabilities_match_expected(
     assert total_expected_damage > 0
     assert hasattr(results, "total_expected_damage")
     assert results.total_expected_damage == total_expected_damage
+
+
+@pytest.mark.parametrize(
+    "simulation_method",
+    [
+        "shoot_at_simulation",
+        "melee_attack_simulation",
+    ],
+)
+def test_unit_simulation_returns_dict_with_simulation_results(
+    space_marine, necron_warrior, simulation_method
+):
+    """Test that simulation methods return a dictionary with dice roll outcomes."""
+    attacker_models = [space_marine for _ in range(5)]
+    attacker_unit = Unit(models=attacker_models, name="Tactical Squad")
+    
+    defender_models = [necron_warrior for _ in range(10)]
+    defender_unit = Unit(models=defender_models, name="Necron Warriors")
+    
+    # Call the appropriate simulation method
+    result = getattr(attacker_unit, simulation_method)(defender_unit)
+    
+    # Verify result is a dictionary
+    assert isinstance(result, dict), f"{simulation_method} should return a dictionary"
+    
+    # Verify required keys exist
+    required_keys = {
+        "hit_rolls",
+        "successful_hits", 
+        "wound_rolls",
+        "successful_wounds",
+        "save_rolls",
+        "successful_damage",
+        "damage_to_unit"
+    }
+    assert set(result.keys()) == required_keys, (
+        f"Result should contain keys: {required_keys}"
+    )
+    
+    # Verify all values are lists
+    for key, value in result.items():
+        assert isinstance(value, list), f"{key} should be a list"
+    
+    # Verify all hit_rolls are integers (die roll results)
+    assert all(isinstance(roll, int) for roll in result["hit_rolls"]), (
+        "All hit_rolls should be integers"
+    )
+    
+    # Verify successful_hits is a subset of hit_rolls (by index or tracking)
+    assert len(result["successful_hits"]) <= len(result["hit_rolls"]), (
+        "successful_hits cannot exceed total hit_rolls"
+    )
+    
+    # Verify wound_rolls length matches successful_hits length
+    assert len(result["wound_rolls"]) == len(result["successful_hits"]), (
+        "wound_rolls should only be made for successful hits"
+    )
+    
+    # Verify save_rolls length matches successful_wounds length  
+    assert len(result["save_rolls"]) == len(result["successful_wounds"]), (
+        "save_rolls should only be made for successful wounds"
+    )
+    
+    # Verify damage_to_unit contains integers
+    assert all(isinstance(dmg, int) for dmg in result["damage_to_unit"]), (
+        "All damage_to_unit values should be integers"
+    )
+    
+    # Verify successful_damage length matches damage_to_unit length
+    assert len(result["successful_damage"]) == len(result["damage_to_unit"]), (
+        "successful_damage should match damage_to_unit length"
+    )
