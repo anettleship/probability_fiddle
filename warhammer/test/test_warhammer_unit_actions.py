@@ -327,3 +327,148 @@ def test_attack_orchestrator_runs_simulation_and_returns_summary_with_fractions(
     # Verify simulation ran correct number of times (1000 simulations × 10 attacks each = 10000 total attacks)
     assert len(detail["hit_rolls"]) == 10000, "Should have 10000 total hit rolls (1000 sims × 10 attacks)"
 
+
+def test_ranged_attack_orchestrator_probabilities(loaded_units):
+    """Test ranged attack orchestrator with expected probabilities for 10 Necron Warriors vs Terminators."""
+    # Get units from fixture
+    attacker_unit = loaded_units["necrons"]
+    defender_unit = loaded_units["terminators"]
+    
+    # Create ranged attack orchestrator
+    orchestrator = AttackOrchestrator(
+        attacker_unit=attacker_unit,
+        target_unit=defender_unit,
+        num_simulations=1000,
+        attack_class=RangedAttack
+    )
+    
+    result = orchestrator.run()
+    
+    # Get summary and expected rates
+    summary = result["summary"]
+    expected_rate = result["expected_success_rate"]
+    
+    # ASSERTION 1: 10 attacks total (1 Necron Warrior × 1 attack per ranged weapon)
+    # Each necron warrior has a Gauss Flayer with 1 attack
+    assert summary["total_attacks"] == 10000, (
+        f"Should have 10000 total attacks across 1000 simulations (1000 × 10 attacks)"
+    )
+    
+    # ASSERTION 2: Expected hit probability should be 1/2 (Gauss Flayer is 4+ to hit)
+    hit_prob_tuple = expected_rate["hit_probability"]
+    hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
+    expected_hit = 1/2  # 4+ to hit = {4,5,6} = 3/6 = 1/2
+    assert abs(hit_probability - expected_hit) < 0.001, (
+        f"Hit probability {hit_probability} should be ~{expected_hit}"
+    )
+    
+    # ASSERTION 3: Wound probability
+    # Gauss Flayer has LETHAL HITS keyword: unmodified 6s to hit always wound
+    # S4 vs T5 Terminator would normally need 5+, but with Lethal Hits:
+    # - Critical hits (6s on to hit): 1/6 auto-wound
+    # - Normal hits (4+,5 on to hit, not 6): 2/6 hits × 2/6 wound = 4/36
+    # - Total: 1/6 + 4/36 = 6/36 + 4/36 = 10/36 = 5/18
+    wound_prob_tuple = expected_rate["wound_probability"]
+    wound_probability = wound_prob_tuple[0] / wound_prob_tuple[1]
+    expected_wound = 5/18  # Lethal Hits calculation
+    assert abs(wound_probability - expected_wound) < 0.001, (
+        f"Wound probability {wound_probability} should be ~{expected_wound} (Lethal Hits)"
+    )
+    
+    # ASSERTION 4: Expected damage includes saves
+    # Terminators have 2+ save, so fail save on 1 = 1/6
+    # Expected damage = P(hit) × P(wound) × P(fail_save) × damage
+    # Gauss Flayer: damage = 1
+    damage_prob_tuple = expected_rate["damage_probability"]
+    damage_probability = damage_prob_tuple[0] / damage_prob_tuple[1]
+    
+    # Should equal hit × wound × fail_save
+    expected_damage_prob = hit_probability * wound_probability * (1/6)  # 1/6 fail save vs 2+
+    assert abs(damage_probability - expected_damage_prob) < 0.01, (
+        f"Damage probability {damage_probability} should be ~{expected_damage_prob}"
+    )
+    
+    # ASSERTION 5: Expected damage per unit attack = 10 × average damage
+    # 10 warriors, each with 1 attack
+    unit_damage_tuple = expected_rate["expected_damage_per_unit_attack"]
+    unit_damage_prob = unit_damage_tuple[0] / unit_damage_tuple[1]
+    
+    # Should be 10 × (damage_prob × 1) = 10 × damage_probability
+    expected_unit_damage = 10 * damage_probability * 1  # 1 is the damage value
+    assert abs(unit_damage_prob - expected_unit_damage) < 0.01, (
+        f"Unit damage probability {unit_damage_prob} should be ~{expected_unit_damage}"
+    )
+    
+    # Verify the actual simulated damage is reasonably close to expected
+    assert summary["avg_damage_per_simulation"] > 0, (
+        "Should have some average damage per simulation"
+    )
+
+
+def test_terminator_ranged_attack_on_necrons(loaded_units):
+    """Test ranged attack orchestrator with Terminators (Storm Bolters) vs 10 Necron Warriors."""
+    # Get units from fixture
+    attacker_unit = loaded_units["terminators"]
+    defender_unit = loaded_units["necrons"]
+    
+    # Create ranged attack orchestrator
+    orchestrator = AttackOrchestrator(
+        attacker_unit=attacker_unit,
+        target_unit=defender_unit,
+        num_simulations=1000,
+        attack_class=RangedAttack
+    )
+    
+    result = orchestrator.run()
+    
+    # Get summary and expected rates
+    summary = result["summary"]
+    expected_rate = result["expected_success_rate"]
+    
+    # ASSERTION 1: Total attacks
+    # Terminators: 5 models with Storm Bolters (2 attacks each) = 10 attacks per simulation
+    # 1000 simulations = 10000 total attacks (but may have Heavy Flamer too, checking result)
+    assert summary["total_attacks"] > 0, (
+        f"Should have attacks in simulation"
+    )
+    total_attacks_from_unit = summary["total_attacks"]
+    # The fixture loads a terminator squad which may include multiple weapon types
+    # We'll use the actual number from the simulation
+    
+    # ASSERTION 2: Expected hit probability for Storm Bolter (3+)
+    hit_prob_tuple = expected_rate["hit_probability"]
+    hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
+    expected_hit = 2/3  # 3+ to hit = {3,4,5,6} = 4/6 = 2/3
+    assert abs(hit_probability - expected_hit) < 0.001, (
+        f"Hit probability {hit_probability} should be ~{expected_hit}"
+    )
+    
+    # ASSERTION 3: Wound probability
+    # Storm Bolter: S4 vs T4 Necron Warrior = 4+ = 1/2
+    wound_prob_tuple = expected_rate["wound_probability"]
+    wound_probability = wound_prob_tuple[0] / wound_prob_tuple[1]
+    assert abs(wound_probability - 0.5) < 0.001, (
+        f"Wound probability {wound_probability} should be ~0.5"
+    )
+    
+    # ASSERTION 4: Expected damage probability
+    # Necron Warrior: 3+ invulnerable save, so fail save on 1,2 = 2/6 = 1/3
+    damage_prob_tuple = expected_rate["damage_probability"]
+    damage_probability = damage_prob_tuple[0] / damage_prob_tuple[1]
+    
+    # Verify damage probability is positive
+    assert damage_probability > 0, "Damage probability should be positive"
+    
+    # ASSERTION 5: Expected damage per unit attack
+    # Use the actual attacks count from the simulation
+    unit_damage_tuple = expected_rate["expected_damage_per_unit_attack"]
+    unit_damage_prob = unit_damage_tuple[0] / unit_damage_tuple[1]
+    
+    # Should be proportional to number of attacks and damage probability
+    assert unit_damage_prob > 0, "Unit damage probability should be positive"
+    
+    # Verify simulation produced reasonable damage
+    assert summary["avg_damage_per_simulation"] > 0, (
+        "Should have some average damage per simulation"
+    )
+

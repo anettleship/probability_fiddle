@@ -1,7 +1,9 @@
 import pytest
+from pathlib import Path
 
 from ..warhammer import Model, Unit
 from ..warhammer_base import MeleeWeapon, RangedWeapon
+from ..load_unit_data_from_roster import LoadUnitDataFromRoster
 
 
 # Simulation convergence test tolerances - allow this margin of error due to randomness when comparing 
@@ -250,3 +252,21 @@ def necron_warrior_unit(necron_warrior):
     """Unit with a single Necron Warrior model."""
     models = [necron_warrior] * 10
     return Unit(models=models, name="Necron Warrior Unit")
+
+
+@pytest.fixture
+def loaded_units():
+    """Load units from JSON test data files."""
+    necron_roster_path = Path(__file__).parent.parent / "test_data" / "Single_Necron_Warrior_Unit.json"
+    terminator_roster_path = Path(__file__).parent.parent / "test_data" / "Single_Terminator_Squad_Roster.json"
+    
+    necron_loader = LoadUnitDataFromRoster(datasource=necron_roster_path)
+    terminator_loader = LoadUnitDataFromRoster(datasource=terminator_roster_path)
+    
+    necron_unit = necron_loader.get_unit("Necron Warriors")
+    terminator_unit = terminator_loader.get_unit("Terminator Squad")
+    
+    return {
+        "necrons": necron_unit,
+        "terminators": terminator_unit,
+    }
