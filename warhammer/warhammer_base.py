@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .constants import WeaponAttribute
+
 
 class Model:
     def __init__(
@@ -26,8 +28,8 @@ class Model:
         self.objective_control = objective_control
         self.invulnerable_save = invulnerable_save
         self.feel_no_pain = feel_no_pain
-        self.ranged_weapons = ranged_weapons if ranged_weapons is not None else {}
-        self.melee_weapons = melee_weapons if melee_weapons is not None else {}
+        setattr(self, WeaponAttribute.RANGED.value, ranged_weapons if ranged_weapons is not None else {})
+        setattr(self, WeaponAttribute.MELEE.value, melee_weapons if melee_weapons is not None else {})
 
     def is_alive(self) -> bool:
         return self.health > 0

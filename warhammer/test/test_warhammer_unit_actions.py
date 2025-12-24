@@ -4,7 +4,7 @@ import pytest
 
 from ..load_unit_data_from_roster import LoadUnitDataFromRoster
 from ..warhammer import Unit
-from ..warhammer_actions import MeleeAttack
+from ..warhammer_actions import MeleeAttack, RangedAttack
 from ..warhammer_actions_orchestrators import AttackOrchestrator
 from .conftest import SIMULATION_HIT_WOUND_TOLERANCE, SIMULATION_DAMAGE_TOLERANCE
 
@@ -223,8 +223,15 @@ def test_unit_simulation_converges_to_probability(
     )
 
 
-def test_attack_orchestrator_runs_melee_simulation_and_returns_summary_with_fractions(
-    necron_warrior, terminator_unit
+@pytest.mark.parametrize(
+    "attack_class",
+    [
+        MeleeAttack,
+        RangedAttack,
+    ],
+)
+def test_attack_orchestrator_runs_simulation_and_returns_summary_with_fractions(
+    necron_warrior, terminator_unit, attack_class
 ):
     """Test that AttackOrchestrator runs simulation and returns structured results with fraction conversion."""
     # Load units from roster JSON files
@@ -246,7 +253,8 @@ def test_attack_orchestrator_runs_melee_simulation_and_returns_summary_with_frac
     orchestrator = AttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=defender_unit,
-        num_simulations=1000
+        num_simulations=1000,
+        attack_class=attack_class
     )
     
     # Run the simulation
@@ -261,6 +269,7 @@ def test_attack_orchestrator_runs_melee_simulation_and_returns_summary_with_frac
     # Verify summary contains simulation outcome
     summary = result["summary"]
     assert isinstance(summary, dict), "Summary should be a dictionary"
+    assert "num_simulations" in summary
     assert "total_attacks" in summary
     assert "total_hits" in summary
     assert "total_wounds" in summary
@@ -268,6 +277,9 @@ def test_attack_orchestrator_runs_melee_simulation_and_returns_summary_with_frac
     assert "avg_hit_rate" in summary
     assert "avg_wound_rate" in summary
     assert "avg_damage_per_simulation" in summary
+    assert "max_damage_in_single_simulation" in summary
+    assert "min_damage_in_single_simulation" in summary
+    assert "damage_variance" in summary
     
     # Verify expected_success_rate contains fractions
     expected_rate = result["expected_success_rate"]
@@ -275,6 +287,7 @@ def test_attack_orchestrator_runs_melee_simulation_and_returns_summary_with_frac
     assert "hit_probability" in expected_rate
     assert "wound_probability" in expected_rate
     assert "damage_probability" in expected_rate
+    assert "expected_damage_per_attack" in expected_rate
     
     # Each probability should be a tuple (numerator, denominator)
     hit_prob = expected_rate["hit_probability"]

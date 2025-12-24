@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .warhammer_base import MeleeWeapon, Model, RangedWeapon
+from .constants import SimulationMethod, WeaponAttribute
 
 
 class Attack:
@@ -144,6 +145,16 @@ class RangedAttack(Attack):
     ):
         super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
+    
+    @classmethod
+    def get_simulation_method_name(cls) -> str:
+        """Return the name of the Unit simulation method for this attack type."""
+        return SimulationMethod.RANGED.value
+    
+    @classmethod
+    def get_weapon_type_attribute(cls) -> str:
+        """Return the name of the Model attribute that stores weapons for this attack type."""
+        return WeaponAttribute.RANGED.value
 
     def probability_to_hit_successful_outcomes(self) -> set[int]:
         required_roll = self.weapon.ballistic_skill
@@ -175,6 +186,16 @@ class MeleeAttack(Attack):
     ):
         super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
+    
+    @classmethod
+    def get_simulation_method_name(cls) -> str:
+        """Return the name of the Unit simulation method for this attack type."""
+        return SimulationMethod.MELEE.value
+    
+    @classmethod
+    def get_weapon_type_attribute(cls) -> str:
+        """Return the name of the Model attribute that stores weapons for this attack type."""
+        return WeaponAttribute.MELEE.value
 
     def probability_to_hit_successful_outcomes(self) -> set[int]:
         required_roll = self.weapon.weapon_skill
