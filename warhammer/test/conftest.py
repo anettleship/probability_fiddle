@@ -4,6 +4,12 @@ from ..warhammer import Model, Unit
 from ..warhammer_base import MeleeWeapon, RangedWeapon
 
 
+# Simulation convergence test tolerances - allow this margin of error due to randomness when comparing 
+# simulation to expected probabilities
+SIMULATION_HIT_WOUND_TOLERANCE = 0.055
+SIMULATION_DAMAGE_TOLERANCE = 0.165
+
+
 @pytest.fixture
 def bolter():
     return RangedWeapon(

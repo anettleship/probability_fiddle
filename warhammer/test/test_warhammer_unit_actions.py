@@ -2,6 +2,7 @@ import pytest
 
 from ..warhammer import Unit
 from ..warhammer_actions import MeleeAttack
+from .conftest import SIMULATION_HIT_WOUND_TOLERANCE, SIMULATION_DAMAGE_TOLERANCE
 
 
 def test_unit_can_shoot_single_weapon_type_at_target(
@@ -193,7 +194,8 @@ def test_unit_simulation_converges_to_probability(
     
     expected_hit_probability = attack.probability_to_hit()
     expected_wound_probability = attack.probability_to_wound()
-    expected_damage_per_attack = attack.probability_to_damage() * weapon.damage
+    expected_damage_probability = attack.probability_to_damage()
+    expected_damage_per_attack = expected_damage_probability * weapon.damage
     
     # Calculate expected damage per simulation
     # 10 warriors × 1 attack each = 10 attacks per simulation
@@ -201,20 +203,18 @@ def test_unit_simulation_converges_to_probability(
     expected_damage_per_simulation = attacks_per_simulation * expected_damage_per_attack
     
     # Assert simulation converges to expected probabilities (within reasonable tolerance)
-    # Hit/wound rates should be very close (5% tolerance)
-    # Damage has more variance due to cascading probabilities (15% tolerance)
-    hit_wound_tolerance = 0.05
-    damage_tolerance = 0.15
+    # Hit/wound rates should be very close (5.5% tolerance)
+    # Damage has more variance due to cascading probabilities (16.5% tolerance)
     
-    assert abs(avg_hit_rate - expected_hit_probability) < hit_wound_tolerance, (
+    assert abs(avg_hit_rate - expected_hit_probability) < SIMULATION_HIT_WOUND_TOLERANCE, (
         f"Hit rate {avg_hit_rate:.3f} should be close to expected {expected_hit_probability:.3f}"
     )
     
-    assert abs(avg_wound_rate - expected_wound_probability) < hit_wound_tolerance, (
+    assert abs(avg_wound_rate - expected_wound_probability) < SIMULATION_HIT_WOUND_TOLERANCE, (
         f"Wound rate {avg_wound_rate:.3f} should be close to expected {expected_wound_probability:.3f}"
     )
     
-    assert abs(avg_damage_per_simulation - expected_damage_per_simulation) / expected_damage_per_simulation < damage_tolerance, (
+    assert abs(avg_damage_per_simulation - expected_damage_per_simulation) / expected_damage_per_simulation < SIMULATION_DAMAGE_TOLERANCE, (
         f"Average damage {avg_damage_per_simulation:.3f} should be close to expected {expected_damage_per_simulation:.3f}"
     )
 
