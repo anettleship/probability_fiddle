@@ -13,7 +13,7 @@ class AttackOrchestrator:
         attacker_unit: Unit,
         target_unit: Unit,
         num_simulations: int = 1,
-        attack_class: type = MeleeAttack
+        attack_class: type = [MeleeAttack, RangedAttack],
     ):
         self.attacker_unit = attacker_unit
         self.target_unit = target_unit
@@ -74,28 +74,33 @@ class AttackOrchestrator:
         else:
             variance = 0
         
-        # Calculate expected probabilities using first model as representative
-        attacker_model = self.attacker_unit.all_models()[0]
+        # Calculate weighted probabilities across all weapons in the unit
+        weighted_probs = self.calculate_weighted_weapon_probabilities()
+        
+        expected_hit_probability = weighted_probs["weighted_hit_probability"]
+        expected_wound_probability = weighted_probs["weighted_wound_probability"]
+        expected_damage_probability = weighted_probs["weighted_damage_probability"]
+        
+        # Calculate expected damage per unit attack
+        # This requires iterating through all models and weapons to get weighted average damage
+        total_weighted_damage = 0.0
+        
         defender_model = self.target_unit.all_models()[0]
+        for model in self.attacker_unit.all_models():
+            weapons_dict = getattr(model, self.weapon_type)
+            for weapon_name, weapon in weapons_dict.items():
+                attack = self.attack_class(
+                    attacker=model,
+                    target=defender_model,
+                    weapon=weapon,
+                )
+                damage_prob = attack.probability_to_damage()
+                avg_damage = weapon.get_average_damage()
+                num_attacks = weapon.attacks
+                
+                total_weighted_damage += num_attacks * damage_prob * avg_damage
         
-        # Get weapon dictionary and first weapon
-        weapons_dict = getattr(attacker_model, self.weapon_type)
-        weapon = weapons_dict[list(weapons_dict.keys())[0]]
-        
-        # Create attack instance using the attack class
-        attack = self.attack_class(
-            attacker=attacker_model,
-            target=defender_model,
-            weapon=weapon,
-        )
-        
-        expected_hit_probability = attack.probability_to_hit()
-        expected_wound_probability = attack.probability_to_wound()
-        expected_damage_probability = attack.probability_to_damage()
-        
-        # Get average damage (handles variable damage like D6)
-        average_damage = weapon.get_average_damage()
-        expected_damage_per_unit_attack = expected_damage_probability * average_damage * len(self.attacker_unit.all_models())
+        expected_damage_per_unit_attack = total_weighted_damage
         
         # Convert probabilities to fractions
         hit_fraction = ProbabilityConverter.float_to_fraction(expected_hit_probability)
@@ -132,4 +137,68 @@ class AttackOrchestrator:
                 "successful_damage": all_successful_damage,
                 "damage_to_unit": all_damage_to_unit,
             },
+        }
+    
+    def calculate_weighted_weapon_probabilities(self) -> dict:
+        """Calculate weighted average probabilities across all weapons in the unit.
+        
+        For units with multiple weapon types (e.g., Storm Bolters and Heavy Flamers),
+        this calculates the weighted average of hit/wound/damage probabilities based
+        on the number of attacks each weapon contributes.
+        
+        Returns:
+            dict with keys:
+                - weighted_hit_probability: float
+                - weighted_wound_probability: float
+                - weighted_damage_probability: float
+                - total_attacks: int
+        """
+        defender_model = self.target_unit.all_models()[0]
+        
+        total_attacks = 0
+        weighted_hits = 0.0
+        weighted_wounds = 0.0
+        weighted_damage = 0.0
+        
+        # Iterate through all models in the attacking unit
+        for model in self.attacker_unit.all_models():
+            weapons_dict = getattr(model, self.weapon_type)
+            
+            # Iterate through all weapons on this model
+            for weapon_name, weapon in weapons_dict.items():
+                # Get number of attacks for this weapon
+                num_attacks = weapon.attacks
+                
+                # Create attack instance to calculate probabilities
+                attack = self.attack_class(
+                    attacker=model,
+                    target=defender_model,
+                    weapon=weapon,
+                )
+                
+                hit_prob = attack.probability_to_hit()
+                wound_prob = attack.probability_to_wound()
+                damage_prob = attack.probability_to_damage()
+                
+                # Weight by number of attacks
+                weighted_hits += num_attacks * hit_prob
+                weighted_wounds += num_attacks * wound_prob
+                weighted_damage += num_attacks * damage_prob
+                total_attacks += num_attacks
+        
+        # Calculate weighted averages
+        if total_attacks > 0:
+            weighted_hit_avg = weighted_hits / total_attacks
+            weighted_wound_avg = weighted_wounds / total_attacks
+            weighted_damage_avg = weighted_damage / total_attacks
+        else:
+            weighted_hit_avg = 0.0
+            weighted_wound_avg = 0.0
+            weighted_damage_avg = 0.0
+        
+        return {
+            "weighted_hit_probability": weighted_hit_avg,
+            "weighted_wound_probability": weighted_wound_avg,
+            "weighted_damage_probability": weighted_damage_avg,
+            "total_attacks": total_attacks,
         }

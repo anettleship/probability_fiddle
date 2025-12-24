@@ -355,6 +355,7 @@ def test_necron_ranged_attack_on_terminators(loaded_units):
     )
     
     # ASSERTION 2: Expected hit probability should be 1/2 (Gauss Flayer is 4+ to hit)
+    # Necrons have only one weapon type, so weighted probability equals single-weapon probability
     hit_prob_tuple = expected_rate["hit_probability"]
     hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
     expected_hit = 1/2  # 4+ to hit = {4,5,6} = 3/6 = 1/2
@@ -398,6 +399,13 @@ def test_necron_ranged_attack_on_terminators(loaded_units):
     assert abs(unit_damage_prob - expected_unit_damage) < 1e-15, (
         f"Unit damage probability {unit_damage_prob} should match {expected_unit_damage} (within floating point precision)"
     )
+    
+    # NOTE: Skipping ASSERTION 6 (simulation convergence) for this test
+    # The Necron Gauss Flayer has Lethal Hits keyword, which is implemented in probability
+    # calculations but NOT YET in the simulation code. This causes a mismatch:
+    # - Expected (with Lethal Hits): P(wound|attack) = 5/18 = 0.278
+    # - Simulated (without Lethal Hits): P(wound|attack) = 1/2 × 1/3 = 1/6 = 0.167
+    # TODO: Implement Lethal Hits in shoot_at_simulation() method
 
 
 def test_terminator_ranged_attack_on_necrons(loaded_units):
@@ -430,20 +438,25 @@ def test_terminator_ranged_attack_on_necrons(loaded_units):
     # The fixture loads a terminator squad which may include multiple weapon types
     # We'll use the actual number from the simulation
     
-    # ASSERTION 2: Expected hit probability for Storm Bolter (3+)
+    # ASSERTION 2: Expected hit probability is WEIGHTED across multiple weapons
+    # Terminators have Storm Bolters (BS 3+, 8 attacks) and Heavy Flamer (auto-hit, 3 attacks)
+    # Weighted: (8 × 2/3 + 3 × 1) / 11 = 0.7575...
     hit_prob_tuple = expected_rate["hit_probability"]
     hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
-    expected_hit = 2/3  # 3+ to hit = {3,4,5,6} = 4/6 = 2/3
-    assert hit_probability == expected_hit, (
-        f"Hit probability {hit_probability} should be exactly {expected_hit}"
+    expected_weighted_hit = (8 * 2/3 + 3 * 1) / 11
+    assert abs(hit_probability - expected_weighted_hit) < 1e-10, (
+        f"Hit probability {hit_probability} should match weighted {expected_weighted_hit}"
     )
     
-    # ASSERTION 3: Wound probability
-    # Storm Bolter: S4 vs T4 Necron Warrior = 4+ = 1/2
+    # ASSERTION 3: Wound probability is also WEIGHTED
+    # Storm Bolter: S4 vs T4 = 4+ to wound = 1/2, 8 attacks
+    # Heavy Flamer: S5 vs T4 = 3+ to wound = 2/3, 3 attacks
+    # Weighted: (8 × 1/2 + 3 × 2/3) / 11 = 0.5454...
     wound_prob_tuple = expected_rate["wound_probability"]
     wound_probability = wound_prob_tuple[0] / wound_prob_tuple[1]
-    assert wound_probability == 0.5, (
-        f"Wound probability {wound_probability} should be exactly 0.5"
+    expected_weighted_wound = (8 * 1/2 + 3 * 2/3) / 11
+    assert abs(wound_probability - expected_weighted_wound) < 1e-10, (
+        f"Wound probability {wound_probability} should match weighted {expected_weighted_wound}"
     )
     
     # ASSERTION 4: Expected damage probability
@@ -461,5 +474,99 @@ def test_terminator_ranged_attack_on_necrons(loaded_units):
     
     # Should be proportional to number of attacks and damage probability
     assert unit_damage_prob > 0, "Unit damage probability should be positive"
+    
+    # ASSERTION 6: Simulation results should converge to weighted expected probabilities
+    simulated_hit_rate = summary["avg_hit_rate"]
+    simulated_wound_rate = summary["avg_wound_rate"]
+    assert abs(simulated_hit_rate - hit_probability) < SIMULATION_HIT_WOUND_TOLERANCE, (
+        f"Simulated hit rate {simulated_hit_rate:.3f} should converge to weighted expected {hit_probability:.3f}"
+    )
+    assert abs(simulated_wound_rate - wound_probability) < SIMULATION_HIT_WOUND_TOLERANCE, (
+        f"Simulated wound rate {simulated_wound_rate:.3f} should converge to weighted expected {wound_probability:.3f}"
+    )
+    assert abs(summary["avg_damage_per_simulation"] - unit_damage_prob) / unit_damage_prob < SIMULATION_DAMAGE_TOLERANCE, (
+        f"Average damage {summary['avg_damage_per_simulation']:.3f} should converge to expected {unit_damage_prob:.3f}"
+    )
 
+def test_orchestrator_calculates_weighted_weapon_probabilities(loaded_units):
+
+    """Test that orchestrator calculates weighted average probabilities across multiple weapons.
+    
+    Terminators have:
+    - 4 models with Storm Bolter: BS 3+, 2 attacks each = 8 attacks total (hit rate 2/3)
+    - 1 model with Heavy Flamer: auto-hit, 3 attacks = 3 attacks total (hit rate 1)
+    
+    Weighted hit rate should be: (8 × 2/3 + 3 × 1) / 11 = 8.33/11 = 0.7576...
+    Not the single-weapon rate of 2/3 = 0.6666...
+    """
+    # Get units from fixture
+    attacker_unit = loaded_units["terminators"]
+    defender_unit = loaded_units["necrons"]
+    
+    # Create ranged attack orchestrator
+    orchestrator = AttackOrchestrator(
+        attacker_unit=attacker_unit,
+        target_unit=defender_unit,
+        num_simulations=1000,
+        attack_class=RangedAttack
+    )
+    
+    # Calculate weighted probabilities
+    weighted_probs = orchestrator.calculate_weighted_weapon_probabilities()
+    
+    # ASSERTION 1: Result should be a dictionary with expected keys
+    assert isinstance(weighted_probs, dict), "Should return a dictionary"
+    assert "weighted_hit_probability" in weighted_probs
+    assert "weighted_wound_probability" in weighted_probs
+    assert "weighted_damage_probability" in weighted_probs
+    assert "total_attacks" in weighted_probs
+    
+    # ASSERTION 2: Weighted hit probability should match calculated value
+    # Storm Bolters: 8 attacks × 2/3 hit = 5.333...
+    # Heavy Flamer: 3 attacks × 1 hit = 3
+    # Total: (5.333... + 3) / 11 = 8.333.../11 = 0.7575...
+    expected_weighted_hit = (8 * 2/3 + 3 * 1) / 11
+    assert abs(weighted_probs["weighted_hit_probability"] - expected_weighted_hit) < 1e-10, (
+        f"Weighted hit probability {weighted_probs['weighted_hit_probability']} should be {expected_weighted_hit}"
+    )
+    
+    # ASSERTION 3: Total attacks should be 11 (per simulation)
+    assert weighted_probs["total_attacks"] == 11, (
+        f"Total attacks should be 11 (8 Storm Bolter + 3 Heavy Flamer)"
+    )
+
+
+def test_orchestrator_run_uses_weighted_probabilities_for_multi_weapon_units(loaded_units):
+    """Test that orchestrator's run() method uses weighted probabilities in expected_success_rate.
+    
+    This ensures that for units with multiple weapon types, the orchestrator reports
+    weighted average probabilities that match what the simulation actually does.
+    """
+    # Get units from fixture
+    attacker_unit = loaded_units["terminators"]
+    defender_unit = loaded_units["necrons"]
+    
+    # Create ranged attack orchestrator
+    orchestrator = AttackOrchestrator(
+        attacker_unit=attacker_unit,
+        target_unit=defender_unit,
+        num_simulations=1000,
+        attack_class=RangedAttack
+    )
+    
+    result = orchestrator.run()
+    
+    # Get weighted probabilities directly
+    weighted_probs = orchestrator.calculate_weighted_weapon_probabilities()
+    
+    # Extract probabilities from result
+    expected_rate = result["expected_success_rate"]
+    hit_prob_tuple = expected_rate["hit_probability"]
+    hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
+    
+    # ASSERTION: Hit probability in result should match weighted calculation
+    expected_weighted_hit = weighted_probs["weighted_hit_probability"]
+    assert abs(hit_probability - expected_weighted_hit) < 1e-10, (
+        f"Hit probability {hit_probability} should match weighted {expected_weighted_hit}"
+    )
 
