@@ -13,7 +13,10 @@ from typing import Literal
 
 from warhammer.load_unit_data_from_roster import LoadUnitDataFromRoster
 from warhammer.warhammer_actions import MeleeAttack, RangedAttack
-from warhammer.warhammer_actions_orchestrators import AttackOrchestrator
+from warhammer.warhammer_actions_orchestrators import (
+    MeleeAttackOrchestrator,
+    RangedAttackOrchestrator,
+)
 
 app = FastAPI(
     title="Warhammer 40K Probability Calculator API",
@@ -120,15 +123,18 @@ async def simulate_attack(request: SimulationRequest):
                 detail=f"Unit not found in defender roster: {request.defender_unit}",
             )
         
-        # Select attack class based on attack type
-        attack_class = MeleeAttack if request.attack_type == "melee" else RangedAttack
+        # Select orchestrator class based on attack type
+        orchestrator_class = (
+            MeleeAttackOrchestrator
+            if request.attack_type == "melee"
+            else RangedAttackOrchestrator
+        )
         
         # Run simulation
-        orchestrator = AttackOrchestrator(
+        orchestrator = orchestrator_class(
             attacker_unit=attacker_unit,
             target_unit=defender_unit,
             num_simulations=request.num_simulations,
-            attack_class=attack_class,
         )
         
         result = orchestrator.run()

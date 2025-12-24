@@ -1,29 +1,51 @@
 from __future__ import annotations
 
-from typing import Callable
+from abc import ABC, abstractmethod
+from typing import Callable, Type
 
 from .warhammer import Unit
-from .warhammer_actions import MeleeAttack, RangedAttack
+from .warhammer_actions import Attack, MeleeAttack, RangedAttack
 from .probability_objects import ProbabilityConverter
 
 
-class AttackOrchestrator:
+class AttackOrchestrator(ABC):
+    """Base class for orchestrating attack simulations and probability calculations.
+    
+    This abstract class defines the common interface for running combat simulations
+    and calculating expected probabilities for attacks from one unit against another.
+    
+    Attributes:
+        attacker_unit: The attacking unit
+        target_unit: The defending unit
+        num_simulations: Number of simulation runs to perform
+    """
+    
     def __init__(
         self,
         attacker_unit: Unit,
         target_unit: Unit,
         num_simulations: int = 1,
-        attack_class: type = [MeleeAttack, RangedAttack],
     ):
-        self.attacker_unit = attacker_unit
-        self.target_unit = target_unit
-        self.num_simulations = num_simulations
-        self.attack_class = attack_class  # MeleeAttack or RangedAttack class
-        
-        # Get simulation method and weapon type from the attack class itself
-        simulation_method_name = attack_class.get_simulation_method_name()
-        self.simulation_method = getattr(attacker_unit, simulation_method_name)
-        self.weapon_type = attack_class.get_weapon_type_attribute()
+        self.attacker_unit: Unit = attacker_unit
+        self.target_unit: Unit = target_unit
+        self.num_simulations: int = num_simulations
+    
+    @property
+    @abstractmethod
+    def attack_class(self) -> Type[Attack]:
+        """The attack class type (MeleeAttack or RangedAttack)."""
+        pass
+    
+    @property
+    @abstractmethod
+    def weapon_type(self) -> str:
+        """The weapon attribute name ('ranged_weapons' or 'melee_weapons')."""
+        pass
+    
+    @abstractmethod
+    def simulate(self, target_unit: Unit) -> dict:
+        """Run a single simulation against the target unit."""
+        pass
     
     def run(self) -> dict:
         """Run simulations and return structured results with summary, expected rates, and detail."""
@@ -40,7 +62,7 @@ class AttackOrchestrator:
         damage_per_simulation = []
         
         for _ in range(self.num_simulations):
-            sim_result = self.simulation_method(self.target_unit)
+            sim_result = self.simulate(self.target_unit)
             all_hit_rolls.extend(sim_result["hit_rolls"])
             all_successful_hits.extend(sim_result["successful_hits"])
             all_wound_rolls.extend(sim_result["wound_rolls"])
@@ -96,7 +118,7 @@ class AttackOrchestrator:
                 )
                 damage_prob = attack.probability_to_damage()
                 avg_damage = weapon.get_average_damage()
-                num_attacks = weapon.attacks
+                num_attacks = weapon.get_average_attacks()
                 
                 total_weighted_damage += num_attacks * damage_prob * avg_damage
         
@@ -166,8 +188,8 @@ class AttackOrchestrator:
             
             # Iterate through all weapons on this model
             for weapon_name, weapon in weapons_dict.items():
-                # Get number of attacks for this weapon
-                num_attacks = weapon.attacks
+                # Get number of attacks for this weapon (use average for variable attacks)
+                num_attacks = weapon.get_average_attacks()
                 
                 # Create attack instance to calculate probabilities
                 attack = self.attack_class(
@@ -202,3 +224,35 @@ class AttackOrchestrator:
             "weighted_damage_probability": weighted_damage_avg,
             "total_attacks": total_attacks,
         }
+
+
+class RangedAttackOrchestrator(AttackOrchestrator):
+    """Orchestrates ranged attack simulations and probability calculations."""
+    
+    @property
+    def attack_class(self) -> Type[Attack]:
+        return RangedAttack
+    
+    @property
+    def weapon_type(self) -> str:
+        return "ranged_weapons"
+    
+    def simulate(self, target_unit: Unit) -> dict:
+        """Run a single ranged attack simulation."""
+        return self.attacker_unit.shoot_at_simulation(target_unit)
+
+
+class MeleeAttackOrchestrator(AttackOrchestrator):
+    """Orchestrates melee attack simulations and probability calculations."""
+    
+    @property
+    def attack_class(self) -> Type[Attack]:
+        return MeleeAttack
+    
+    @property
+    def weapon_type(self) -> str:
+        return "melee_weapons"
+    
+    def simulate(self, target_unit: Unit) -> dict:
+        """Run a single melee attack simulation."""
+        return self.attacker_unit.melee_attack_simulation(target_unit)

@@ -44,7 +44,7 @@ class Weapon:
     def __init__(
         self,
         name: str,
-        attacks: int,
+        attacks: int | str,
         strength: int,
         armour_penetration: int,
         damage: int | str,
@@ -56,6 +56,88 @@ class Weapon:
         self.armour_penetration = armour_penetration
         self.damage = damage
         self.keywords = keywords if keywords is not None else []
+    
+    @staticmethod
+    def parse_attacks_average(attacks: int | str) -> float:
+        """Parse attacks notation and return the average expected number of attacks.
+        
+        Handles:
+        - Fixed integers: 3 -> 3.0
+        - D6: "D6" -> 3.5
+        - D3: "D3" -> 2.0
+        - Multiple dice: "2D6" -> 7.0
+        """
+        if isinstance(attacks, int):
+            return float(attacks)
+        
+        if isinstance(attacks, str):
+            # Handle pure integer strings
+            if attacks.isdigit():
+                return float(attacks)
+            
+            # Parse D6 notation
+            pattern_d6 = r'^(\d*)D6$'
+            match = re.match(pattern_d6, attacks, re.IGNORECASE)
+            if match:
+                num_dice = int(match.group(1)) if match.group(1) else 1
+                return num_dice * 3.5
+            
+            # Parse D3 notation
+            pattern_d3 = r'^(\d*)D3$'
+            match = re.match(pattern_d3, attacks, re.IGNORECASE)
+            if match:
+                num_dice = int(match.group(1)) if match.group(1) else 1
+                return num_dice * 2.0
+        
+        # If we can't parse it, raise an error
+        raise ValueError(f"Cannot parse attacks notation: {attacks}")
+    
+    def get_average_attacks(self) -> float:
+        """Return the average number of attacks for this weapon."""
+        return self.parse_attacks_average(self.attacks)
+    
+    @staticmethod
+    def roll_attacks(attacks: int | str, dice_roller=None) -> int:
+        """Roll for actual number of attacks.
+        
+        Args:
+            attacks: The attacks value (int or dice notation string like "D6", "2D6", "D3")
+            dice_roller: Optional DiceRoll instance for rolling dice
+        
+        Returns:
+            The actual number of attacks rolled
+        """
+        if isinstance(attacks, int):
+            return attacks
+        
+        if isinstance(attacks, str):
+            # Handle pure integer strings
+            if attacks.isdigit():
+                return int(attacks)
+            
+            # Parse D6 notation
+            pattern_d6 = r'^(\d*)D6$'
+            match = re.match(pattern_d6, attacks, re.IGNORECASE)
+            if match:
+                if dice_roller is None:
+                    raise ValueError("dice_roller required for variable attacks")
+                num_dice = int(match.group(1)) if match.group(1) else 1
+                total = sum(dice_roller.roll() for _ in range(num_dice))
+                return total
+            
+            # Parse D3 notation
+            pattern_d3 = r'^(\d*)D3$'
+            match = re.match(pattern_d3, attacks, re.IGNORECASE)
+            if match:
+                if dice_roller is None:
+                    raise ValueError("dice_roller required for variable attacks")
+                num_dice = int(match.group(1)) if match.group(1) else 1
+                # D3 is a D6 divided by 2 (rounded up): 1-2=1, 3-4=2, 5-6=3
+                total = sum((dice_roller.roll() + 1) // 2 for _ in range(num_dice))
+                return total
+        
+        # If we can't parse it, raise an error
+        raise ValueError(f"Cannot parse attacks notation: {attacks}")
     
     @staticmethod
     def parse_damage_average(damage: int | str) -> float:

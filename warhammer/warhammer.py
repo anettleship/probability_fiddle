@@ -60,7 +60,7 @@ class Unit:
 
         hit_probability = attack.probability_to_hit()
         wound_probability = attack.probability_to_wound()
-        expected_damage_per_attack = attack.probability_to_damage() * weapon.damage
+        expected_damage_per_attack = attack.probability_to_damage() * weapon.get_average_damage()
 
         expected_hits = total_attacks * hit_probability
         expected_wounds = total_attacks * hit_probability * wound_probability
@@ -80,7 +80,7 @@ class Unit:
                         "weapon": weapon,
                         "total_attacks": 0,
                     }
-                weapons_by_name[weapon_name]["total_attacks"] += weapon.attacks
+                weapons_by_name[weapon_name]["total_attacks"] += weapon.get_average_attacks()
 
         # Sort weapons by power (strength desc, AP desc, damage desc)
         sorted_weapons = sorted(
@@ -88,7 +88,7 @@ class Unit:
             key=lambda item: (
                 -item[1]["weapon"].strength,
                 item[1]["weapon"].armour_penetration,
-                -item[1]["weapon"].damage,
+                -item[1]["weapon"].get_average_damage(),
             ),
         )
 
@@ -134,6 +134,7 @@ class Unit:
         }
         
         # Aggregate weapons across all models
+        # TODO we can't aggregate if different models have different stats
         target_model = target_unit.all_models()[0]
         attacker_model = self.all_models()[0]
         
@@ -154,8 +155,11 @@ class Unit:
                 # Check if weapon has Lethal Hits keyword
                 has_lethal_hits = hasattr(weapon, "keywords") and "Lethal Hits" in weapon.keywords
                 
+                # Roll for number of attacks (handles variable attacks like D6)
+                num_attacks = weapon.roll_attacks(weapon.attacks, dice)
+                
                 # Roll to hit for each attack
-                for _ in range(weapon.attacks):
+                for _ in range(num_attacks):
                     hit_roll = dice.roll()
                     result["hit_rolls"].append(hit_roll)
                     
@@ -234,8 +238,11 @@ class Unit:
                 wound_outcomes = attack.probability_to_wound_successful_outcomes()
                 fail_save_outcomes = attack.probability_to_fail_save_outcomes()
                 
+                # Roll for number of attacks (handles variable attacks like D6)
+                num_attacks = weapon.roll_attacks(weapon.attacks, dice)
+                
                 # Roll to hit for each attack
-                for _ in range(weapon.attacks):
+                for _ in range(num_attacks):
                     hit_roll = dice.roll()
                     result["hit_rolls"].append(hit_roll)
                     

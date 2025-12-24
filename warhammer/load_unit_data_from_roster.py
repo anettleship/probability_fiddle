@@ -272,13 +272,19 @@ class LoadUnitDataFromRoster:
 
         return ranged_weapons, melee_weapons
 
-    def _parse_attacks(self, attacks_str: str) -> int:
-        """Parse attacks value (handle D6, 2D6, etc.)."""
-        # For now, return simple integer or average for dice
-        if "D6" in attacks_str.upper():
-            return 3  # Average of D6
-        if "D3" in attacks_str.upper():
-            return 2  # Average of D3
+    def _parse_attacks(self, attacks_str: str) -> int | str:
+        """Parse attacks value (handle D6, 2D6, etc.).
+        
+        Returns either an integer for fixed attacks, or a string like 'D6', '2D6' 
+        for variable attacks that will be rolled each time.
+        """
+        attacks_str = attacks_str.strip().upper()
+        
+        # Check if it contains dice notation
+        if "D6" in attacks_str or "D3" in attacks_str:
+            return attacks_str  # Return the dice string as-is (e.g., "D6", "2D6")
+        
+        # Try to parse as integer
         try:
             return int(attacks_str)
         except ValueError:

@@ -5,7 +5,10 @@ import pytest
 from ..load_unit_data_from_roster import LoadUnitDataFromRoster
 from ..warhammer import Unit
 from ..warhammer_actions import MeleeAttack, RangedAttack
-from ..warhammer_actions_orchestrators import AttackOrchestrator
+from ..warhammer_actions_orchestrators import (
+    RangedAttackOrchestrator,
+    MeleeAttackOrchestrator,
+)
 from .conftest import SIMULATION_HIT_WOUND_TOLERANCE, SIMULATION_DAMAGE_TOLERANCE
 
 
@@ -250,11 +253,10 @@ def test_attack_orchestrator_runs_simulation_and_returns_summary_with_fractions(
     defender_unit = terminator_loader.get_unit("Terminator Squad")
     
     # Create orchestrator with 1000 simulations
-    orchestrator = AttackOrchestrator(
+    orchestrator = RangedAttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=defender_unit,
         num_simulations=1000,
-        attack_class=attack_class
     )
     
     # Run the simulation
@@ -335,11 +337,10 @@ def test_necron_ranged_attack_on_terminators(loaded_units):
     defender_unit = loaded_units["terminators"]
     
     # Create ranged attack orchestrator
-    orchestrator = AttackOrchestrator(
+    orchestrator = RangedAttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=defender_unit,
         num_simulations=1000,
-        attack_class=RangedAttack
     )
     
     result = orchestrator.run()
@@ -431,11 +432,10 @@ def test_terminator_ranged_attack_on_necrons(loaded_units):
     defender_unit = loaded_units["necrons"]
     
     # Create ranged attack orchestrator
-    orchestrator = AttackOrchestrator(
+    orchestrator = RangedAttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=defender_unit,
         num_simulations=1000,
-        attack_class=RangedAttack
     )
     
     result = orchestrator.run()
@@ -455,22 +455,22 @@ def test_terminator_ranged_attack_on_necrons(loaded_units):
     # We'll use the actual number from the simulation
     
     # ASSERTION 2: Expected hit probability is WEIGHTED across multiple weapons
-    # Terminators have Storm Bolters (BS 3+, 8 attacks) and Heavy Flamer (auto-hit, 3 attacks)
-    # Weighted: (8 × 2/3 + 3 × 1) / 11 = 0.7575...
+    # Terminators have Storm Bolters (BS 3+, 8 attacks) and Heavy Flamer (auto-hit, D6=3.5 avg attacks)
+    # Weighted: (8 × 2/3 + 3.5 × 1) / 11.5 = 0.7681...
     hit_prob_tuple = expected_rate["hit_probability"]
     hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
-    expected_weighted_hit = (8 * 2/3 + 3 * 1) / 11
+    expected_weighted_hit = (8 * 2/3 + 3.5 * 1) / 11.5
     assert abs(hit_probability - expected_weighted_hit) < 1e-10, (
         f"Hit probability {hit_probability} should match weighted {expected_weighted_hit}"
     )
     
     # ASSERTION 3: Wound probability is also WEIGHTED
     # Storm Bolter: S4 vs T4 = 4+ to wound = 1/2, 8 attacks
-    # Heavy Flamer: S5 vs T4 = 3+ to wound = 2/3, 3 attacks
-    # Weighted: (8 × 1/2 + 3 × 2/3) / 11 = 0.5454...
+    # Heavy Flamer: S5 vs T4 = 3+ to wound = 2/3, 3.5 attacks (D6 avg)
+    # Weighted: (8 × 1/2 + 3.5 × 2/3) / 11.5 = 0.5507...
     wound_prob_tuple = expected_rate["wound_probability"]
     wound_probability = wound_prob_tuple[0] / wound_prob_tuple[1]
-    expected_weighted_wound = (8 * 1/2 + 3 * 2/3) / 11
+    expected_weighted_wound = (8 * 1/2 + 3.5 * 2/3) / 11.5
     assert abs(wound_probability - expected_weighted_wound) < 1e-10, (
         f"Wound probability {wound_probability} should match weighted {expected_weighted_wound}"
     )
@@ -510,9 +510,9 @@ def test_orchestrator_calculates_weighted_weapon_probabilities(loaded_units):
     
     Terminators have:
     - 4 models with Storm Bolter: BS 3+, 2 attacks each = 8 attacks total (hit rate 2/3)
-    - 1 model with Heavy Flamer: auto-hit, 3 attacks = 3 attacks total (hit rate 1)
+    - 1 model with Heavy Flamer: auto-hit, D6 attacks = 3.5 attacks avg (hit rate 1)
     
-    Weighted hit rate should be: (8 × 2/3 + 3 × 1) / 11 = 8.33/11 = 0.7576...
+    Weighted hit rate should be: (8 × 2/3 + 3.5 × 1) / 11.5 = 0.7681...
     Not the single-weapon rate of 2/3 = 0.6666...
     """
     # Get units from fixture
@@ -520,11 +520,10 @@ def test_orchestrator_calculates_weighted_weapon_probabilities(loaded_units):
     defender_unit = loaded_units["necrons"]
     
     # Create ranged attack orchestrator
-    orchestrator = AttackOrchestrator(
+    orchestrator = RangedAttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=defender_unit,
         num_simulations=1000,
-        attack_class=RangedAttack
     )
     
     # Calculate weighted probabilities
@@ -539,16 +538,16 @@ def test_orchestrator_calculates_weighted_weapon_probabilities(loaded_units):
     
     # ASSERTION 2: Weighted hit probability should match calculated value
     # Storm Bolters: 8 attacks × 2/3 hit = 5.333...
-    # Heavy Flamer: 3 attacks × 1 hit = 3
-    # Total: (5.333... + 3) / 11 = 8.333.../11 = 0.7575...
-    expected_weighted_hit = (8 * 2/3 + 3 * 1) / 11
+    # Heavy Flamer: 3.5 attacks (D6 avg) × 1 hit = 3.5
+    # Total: (5.333... + 3.5) / 11.5 = 8.833.../11.5 = 0.7681...
+    expected_weighted_hit = (8 * 2/3 + 3.5 * 1) / 11.5
     assert abs(weighted_probs["weighted_hit_probability"] - expected_weighted_hit) < 1e-10, (
         f"Weighted hit probability {weighted_probs['weighted_hit_probability']} should be {expected_weighted_hit}"
     )
     
-    # ASSERTION 3: Total attacks should be 11 (per simulation)
-    assert weighted_probs["total_attacks"] == 11, (
-        f"Total attacks should be 11 (8 Storm Bolter + 3 Heavy Flamer)"
+    # ASSERTION 3: Total attacks should be 11.5 (8 Storm Bolter + 3.5 Heavy Flamer avg)
+    assert abs(weighted_probs["total_attacks"] - 11.5) < 1e-10, (
+        f"Total attacks should be 11.5 (8 Storm Bolter + 3.5 D6 Heavy Flamer avg), got {weighted_probs['total_attacks']}"
     )
 
 
@@ -563,11 +562,10 @@ def test_orchestrator_run_uses_weighted_probabilities_for_multi_weapon_units(loa
     defender_unit = loaded_units["necrons"]
     
     # Create ranged attack orchestrator
-    orchestrator = AttackOrchestrator(
+    orchestrator = RangedAttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=defender_unit,
         num_simulations=1000,
-        attack_class=RangedAttack
     )
     
     result = orchestrator.run()

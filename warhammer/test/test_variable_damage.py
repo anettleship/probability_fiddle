@@ -5,7 +5,10 @@ import pytest
 from ..warhammer_base import Model, MeleeWeapon, RangedWeapon
 from ..warhammer import Unit
 from ..warhammer_actions import MeleeAttack, RangedAttack
-from ..warhammer_actions_orchestrators import AttackOrchestrator
+from ..warhammer_actions_orchestrators import (
+    MeleeAttackOrchestrator,
+    RangedAttackOrchestrator,
+)
 
 
 def test_orchestrator_with_d6_damage_weapon():
@@ -47,11 +50,10 @@ def test_orchestrator_with_d6_damage_weapon():
     target_unit = Unit(models=[target_model], name="Ork Boyz")
     
     # This should fail because weapon.damage is "D6" string, not a number
-    orchestrator = AttackOrchestrator(
+    orchestrator = MeleeAttackOrchestrator(
         attacker_unit=attacker_unit,
         target_unit=target_unit,
         num_simulations=10,
-        attack_class=MeleeAttack
     )
     
     result = orchestrator.run()
