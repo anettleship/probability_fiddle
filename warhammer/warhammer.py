@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from .warhammer_actions import RangedAttack, MeleeAttack
 from .warhammer_base import Model
+from .probability_objects import DiceRoll
 
 
 class WeaponResult:
@@ -117,8 +120,6 @@ class Unit:
 
     def shoot_at_simulation(self, target_unit):
         """Simulate shooting by rolling dice for each attack."""
-        from .probability_objects import DiceRoll
-        
         dice = DiceRoll(sides=6)
         
         # Initialize result dictionary
@@ -178,10 +179,8 @@ class Unit:
         
         return result
 
-    def melee_attack_simulation(self, target_unit):
+    def melee_attack_simulation(self, target_unit: Unit):
         """Simulate melee attacks by rolling dice for each attack."""
-        from .probability_objects import DiceRoll
-        
         dice = DiceRoll(sides=6)
         
         # Initialize result dictionary

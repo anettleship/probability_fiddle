@@ -1,6 +1,7 @@
 import pytest
 
 from ..warhammer import Unit
+from ..warhammer_actions import MeleeAttack
 
 
 def test_unit_can_shoot_single_weapon_type_at_target(
@@ -139,3 +140,81 @@ def test_unit_simulation_returns_dict_with_simulation_results(
     assert len(result["successful_damage"]) == len(result["damage_to_unit"]), (
         "successful_damage should match damage_to_unit length"
     )
+
+
+@pytest.mark.parametrize(
+    "simulation_method",
+    [
+        "melee_attack_simulation",
+    ],
+)
+def test_unit_simulation_converges_to_probability(
+    necron_warrior, terminator_unit, simulation_method
+):
+    """Test that simulation averages converge to expected probabilities over many repetitions."""
+    # Create attacking unit: 10 Necron Warriors
+    attacker_models = [necron_warrior for _ in range(10)]
+    attacker_unit = Unit(models=attacker_models, name="Necron Warriors")
+    
+    # Defender unit: 5 Terminators (from fixture)
+    defender_unit = terminator_unit
+    
+    # Run simulation 1000 times
+    num_simulations = 1000
+    total_hits = 0
+    total_wounds = 0
+    total_damage = 0
+    total_attacks = 0
+    
+    for _ in range(num_simulations):
+        result = getattr(attacker_unit, simulation_method)(defender_unit)
+        total_attacks += len(result["hit_rolls"])
+        total_hits += len(result["successful_hits"])
+        total_wounds += len(result["successful_wounds"])
+        total_damage += sum(result["damage_to_unit"])
+    
+    # Calculate simulation averages
+    avg_hit_rate = total_hits / total_attacks if total_attacks > 0 else 0
+    avg_wound_rate = total_wounds / total_hits if total_hits > 0 else 0
+    avg_damage_per_simulation = total_damage / num_simulations
+    
+    # Use first model from each unit as representative
+    attacker_model = attacker_unit.all_models()[0]
+    defender_model = defender_unit.all_models()[0]
+    
+    # Get the close combat weapon from necron warrior
+    weapon = attacker_model.melee_weapons["Close combat weapon"]
+    
+    attack = MeleeAttack(
+        attacker=attacker_model,
+        target=defender_model,
+        weapon=weapon,
+    )
+    
+    expected_hit_probability = attack.probability_to_hit()
+    expected_wound_probability = attack.probability_to_wound()
+    expected_damage_per_attack = attack.probability_to_damage() * weapon.damage
+    
+    # Calculate expected damage per simulation
+    # 10 warriors × 1 attack each = 10 attacks per simulation
+    attacks_per_simulation = 10 * weapon.attacks
+    expected_damage_per_simulation = attacks_per_simulation * expected_damage_per_attack
+    
+    # Assert simulation converges to expected probabilities (within reasonable tolerance)
+    # Hit/wound rates should be very close (5% tolerance)
+    # Damage has more variance due to cascading probabilities (15% tolerance)
+    hit_wound_tolerance = 0.05
+    damage_tolerance = 0.15
+    
+    assert abs(avg_hit_rate - expected_hit_probability) < hit_wound_tolerance, (
+        f"Hit rate {avg_hit_rate:.3f} should be close to expected {expected_hit_probability:.3f}"
+    )
+    
+    assert abs(avg_wound_rate - expected_wound_probability) < hit_wound_tolerance, (
+        f"Wound rate {avg_wound_rate:.3f} should be close to expected {expected_wound_probability:.3f}"
+    )
+    
+    assert abs(avg_damage_per_simulation - expected_damage_per_simulation) / expected_damage_per_simulation < damage_tolerance, (
+        f"Average damage {avg_damage_per_simulation:.3f} should be close to expected {expected_damage_per_simulation:.3f}"
+    )
+
