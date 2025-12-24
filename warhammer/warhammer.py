@@ -175,7 +175,8 @@ class Unit:
                             # Check if save failed (damage dealt)
                             if save_roll in fail_save_outcomes:
                                 result["successful_damage"].append(save_roll)
-                                result["damage_to_unit"].append(weapon.damage)
+                                actual_damage = weapon.roll_damage(weapon.damage, dice)
+                                result["damage_to_unit"].append(actual_damage)
         
         return result
 
@@ -236,6 +237,7 @@ class Unit:
                             # Check if save failed (damage dealt)
                             if save_roll in fail_save_outcomes:
                                 result["successful_damage"].append(save_roll)
-                                result["damage_to_unit"].append(weapon.damage)
+                                actual_damage = weapon.roll_damage(weapon.damage, dice)
+                                result["damage_to_unit"].append(actual_damage)
         
         return result

@@ -92,13 +92,16 @@ class AttackOrchestrator:
         expected_hit_probability = attack.probability_to_hit()
         expected_wound_probability = attack.probability_to_wound()
         expected_damage_probability = attack.probability_to_damage()
-        expected_damage_per_attack = expected_damage_probability * weapon.damage
+        
+        # Get average damage (handles variable damage like D6)
+        average_damage = weapon.get_average_damage()
+        expected_damage_per_unit_attack = expected_damage_probability * average_damage * len(self.attacker_unit.all_models())
         
         # Convert probabilities to fractions
         hit_fraction = ProbabilityConverter.float_to_fraction(expected_hit_probability)
         wound_fraction = ProbabilityConverter.float_to_fraction(expected_wound_probability)
         damage_fraction = ProbabilityConverter.float_to_fraction(expected_damage_probability)
-        expected_damage_fraction = ProbabilityConverter.float_to_fraction(expected_damage_per_attack)
+        expected_unit_damage_fraction = ProbabilityConverter.float_to_fraction(expected_damage_per_unit_attack)
         
         return {
             "summary": {
@@ -118,7 +121,7 @@ class AttackOrchestrator:
                 "hit_probability": hit_fraction,
                 "wound_probability": wound_fraction,
                 "damage_probability": damage_fraction,
-                "expected_damage_per_attack": expected_damage_fraction,
+                "expected_damage_per_unit_attack": expected_unit_damage_fraction,
             },
             "detail": {
                 "hit_rolls": all_hit_rolls,

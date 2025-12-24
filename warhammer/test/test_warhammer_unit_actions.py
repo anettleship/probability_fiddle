@@ -287,7 +287,7 @@ def test_attack_orchestrator_runs_simulation_and_returns_summary_with_fractions(
     assert "hit_probability" in expected_rate
     assert "wound_probability" in expected_rate
     assert "damage_probability" in expected_rate
-    assert "expected_damage_per_attack" in expected_rate
+    assert "expected_damage_per_unit_attack" in expected_rate
     
     # Each probability should be a tuple (numerator, denominator)
     hit_prob = expected_rate["hit_probability"]
