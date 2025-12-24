@@ -1,7 +1,11 @@
+from pathlib import Path
+
 import pytest
 
+from ..load_unit_data_from_roster import LoadUnitDataFromRoster
 from ..warhammer import Unit
 from ..warhammer_actions import MeleeAttack
+from ..warhammer_actions_orchestrators import AttackOrchestrator
 from .conftest import SIMULATION_HIT_WOUND_TOLERANCE, SIMULATION_DAMAGE_TOLERANCE
 
 
@@ -217,4 +221,96 @@ def test_unit_simulation_converges_to_probability(
     assert abs(avg_damage_per_simulation - expected_damage_per_simulation) / expected_damage_per_simulation < SIMULATION_DAMAGE_TOLERANCE, (
         f"Average damage {avg_damage_per_simulation:.3f} should be close to expected {expected_damage_per_simulation:.3f}"
     )
+
+
+def test_attack_orchestrator_runs_melee_simulation_and_returns_summary_with_fractions(
+    necron_warrior, terminator_unit
+):
+    """Test that AttackOrchestrator runs simulation and returns structured results with fraction conversion."""
+    # Load units from roster JSON files
+    necron_roster_path = (
+        Path(__file__).parent.parent / "test_data" / "Single_Necron_Warrior_Unit.json"
+    )
+    terminator_roster_path = (
+        Path(__file__).parent.parent / "test_data" / "Single_Terminator_Squad_Roster.json"
+    )
+    
+    necron_loader = LoadUnitDataFromRoster(datasource=necron_roster_path)
+    terminator_loader = LoadUnitDataFromRoster(datasource=terminator_roster_path)
+    
+    # Get units from loaders
+    attacker_unit = necron_loader.get_unit("Necron Warriors")
+    defender_unit = terminator_loader.get_unit("Terminator Squad")
+    
+    # Create orchestrator with 1000 simulations
+    orchestrator = AttackOrchestrator(
+        attacker_unit=attacker_unit,
+        target_unit=defender_unit,
+        num_simulations=1000
+    )
+    
+    # Run the simulation
+    result = orchestrator.run()
+    
+    # Verify result structure
+    assert isinstance(result, dict), "Result should be a dictionary"
+    assert "summary" in result, "Result should contain 'summary' key"
+    assert "expected_success_rate" in result, "Result should contain 'expected_success_rate' key"
+    assert "detail" in result, "Result should contain 'detail' key"
+    
+    # Verify summary contains simulation outcome
+    summary = result["summary"]
+    assert isinstance(summary, dict), "Summary should be a dictionary"
+    assert "total_attacks" in summary
+    assert "total_hits" in summary
+    assert "total_wounds" in summary
+    assert "total_damage" in summary
+    assert "avg_hit_rate" in summary
+    assert "avg_wound_rate" in summary
+    assert "avg_damage_per_simulation" in summary
+    
+    # Verify expected_success_rate contains fractions
+    expected_rate = result["expected_success_rate"]
+    assert isinstance(expected_rate, dict), "Expected success rate should be a dictionary"
+    assert "hit_probability" in expected_rate
+    assert "wound_probability" in expected_rate
+    assert "damage_probability" in expected_rate
+    
+    # Each probability should be a tuple (numerator, denominator)
+    hit_prob = expected_rate["hit_probability"]
+    assert isinstance(hit_prob, tuple), "Hit probability should be a tuple"
+    assert len(hit_prob) == 2, "Hit probability tuple should have 2 elements"
+    assert isinstance(hit_prob[0], int), "Numerator should be an int"
+    assert isinstance(hit_prob[1], int), "Denominator should be an int"
+    
+    wound_prob = expected_rate["wound_probability"]
+    assert isinstance(wound_prob, tuple), "Wound probability should be a tuple"
+    assert len(wound_prob) == 2, "Wound probability tuple should have 2 elements"
+    
+    damage_prob = expected_rate["damage_probability"]
+    assert isinstance(damage_prob, tuple), "Damage probability should be a tuple"
+    assert len(damage_prob) == 2, "Damage probability tuple should have 2 elements"
+    
+    # Verify detail contains breakdown of all steps
+    detail = result["detail"]
+    assert isinstance(detail, dict), "Detail should be a dictionary"
+    assert "hit_rolls" in detail
+    assert "successful_hits" in detail
+    assert "wound_rolls" in detail
+    assert "successful_wounds" in detail
+    assert "save_rolls" in detail
+    assert "successful_damage" in detail
+    assert "damage_to_unit" in detail
+    
+    # Verify detail contains lists (aggregated across all simulations)
+    assert isinstance(detail["hit_rolls"], list), "hit_rolls should be a list"
+    assert isinstance(detail["successful_hits"], list), "successful_hits should be a list"
+    assert isinstance(detail["wound_rolls"], list), "wound_rolls should be a list"
+    assert isinstance(detail["successful_wounds"], list), "successful_wounds should be a list"
+    assert isinstance(detail["save_rolls"], list), "save_rolls should be a list"
+    assert isinstance(detail["successful_damage"], list), "successful_damage should be a list"
+    assert isinstance(detail["damage_to_unit"], list), "damage_to_unit should be a list"
+    
+    # Verify simulation ran correct number of times (1000 simulations × 10 attacks each = 10000 total attacks)
+    assert len(detail["hit_rolls"]) == 10000, "Should have 10000 total hit rolls (1000 sims × 10 attacks)"
 

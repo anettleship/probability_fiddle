@@ -1,0 +1,470 @@
+{
+  "roster": {
+    "costs": [
+      {
+        "name": "pts",
+        "typeId": "51b2-306e-1021-d207",
+        "value": 90
+      }
+    ],
+    "costLimits": [
+      {
+        "name": "pts",
+        "typeId": "51b2-306e-1021-d207",
+        "value": 500
+      }
+    ],
+    "forces": [
+      {
+        "selections": [
+          {
+            "categories": [
+              {
+                "id": "4ac9-fd30-1e3d-b249",
+                "entryId": "4ac9-fd30-1e3d-b249",
+                "name": "Configuration",
+                "primary": true
+              }
+            ],
+            "id": "n7l31x",
+            "name": "Battle Size",
+            "entryId": "7380-3e40-6ed6-b7cc::564e-fbc6-5266-3ea4",
+            "number": 1,
+            "type": "upgrade",
+            "from": "entry"
+          },
+          {
+            "categories": [
+              {
+                "id": "4ac9-fd30-1e3d-b249",
+                "entryId": "4ac9-fd30-1e3d-b249",
+                "name": "Configuration",
+                "primary": true
+              }
+            ],
+            "id": "nc9l8vi",
+            "name": "Detachment",
+            "entryId": "b04d-22c1-e41b-3aeb::82f1-b597-7b06-8ba2",
+            "number": 1,
+            "type": "upgrade",
+            "from": "entry"
+          },
+          {
+            "selections": [
+              {
+                "categories": [
+                  {
+                    "id": "4ac9-fd30-1e3d-b249",
+                    "name": "Configuration",
+                    "entryId": "4ac9-fd30-1e3d-b249",
+                    "primary": false
+                  }
+                ],
+                "id": "niskbn",
+                "name": "Legends are visible",
+                "entryId": "f5b-1682-90da-2911::892f-57ca-d650-7199::9ed-cbf4-bfe5-90bf",
+                "number": 1,
+                "type": "upgrade",
+                "from": "entry"
+              },
+              {
+                "id": "nmw7rgb",
+                "name": "Unaligned Forces are visible",
+                "entryId": "f5b-1682-90da-2911::985-e753-2e94-859::2973-ea51-7f8d-5403",
+                "number": 1,
+                "type": "upgrade",
+                "from": "entry"
+              },
+              {
+                "id": "nmgwf1y",
+                "name": "Unaligned Fortifications are visible",
+                "entryId": "f5b-1682-90da-2911::4d37-22c-a45c-64f8::e916-2cf4-a49d-b8c4",
+                "number": 1,
+                "type": "upgrade",
+                "from": "entry"
+              }
+            ],
+            "categories": [
+              {
+                "id": "4ac9-fd30-1e3d-b249",
+                "entryId": "4ac9-fd30-1e3d-b249",
+                "name": "Configuration",
+                "primary": true
+              }
+            ],
+            "id": "ngr3gyq",
+            "name": "Show/Hide Options",
+            "entryId": "f5b-1682-90da-2911::e8ef-836a-a9d1-901d",
+            "number": 1,
+            "type": "upgrade",
+            "from": "entry"
+          },
+          {
+            "rules": [
+              {
+                "description": "If your Army Faction is NECRONS, at the end of your Command phase, each unit from your army with this ability that is on the battlefield activates its Reanimation Protocols and reanimates D3 wounds. Each time such a unit reanimates a wound:\n■ If that unit contains one or more models with fewer than their starting number of wounds remaining, select one of those models; that model regains one lost wound.\n■ If all models in that unit have their starting number of wounds, but that unit is not at its Starting Strength, one destroyed model is returned to that unit with one wound remaining.\nOnce such a unit is at its Starting Strength and all of its models have their starting number of wounds, nothing further happens.",
+                "id": "a511-d9ca-17d0-42c5",
+                "name": "Reanimation Protocols",
+                "hidden": false
+              }
+            ],
+            "profiles": [
+              {
+                "characteristics": [
+                  {
+                    "$text": "5\"",
+                    "name": "M",
+                    "typeId": "e703-ecb6-5ce7-aec1"
+                  },
+                  {
+                    "$text": "4",
+                    "name": "T",
+                    "typeId": "d29d-cf75-fc2d-34a4"
+                  },
+                  {
+                    "$text": "4+",
+                    "name": "SV",
+                    "typeId": "450-a17e-9d5e-29da"
+                  },
+                  {
+                    "$text": "1",
+                    "name": "W",
+                    "typeId": "750a-a2ec-90d3-21fe"
+                  },
+                  {
+                    "$text": "7+",
+                    "name": "LD",
+                    "typeId": "58d2-b879-49c7-43bc"
+                  },
+                  {
+                    "$text": "2",
+                    "name": "OC",
+                    "typeId": "bef7-942a-1a23-59f8"
+                  }
+                ],
+                "id": "b82c-b711-6d65-30b5",
+                "name": "Necron Warriors",
+                "hidden": false,
+                "typeId": "c547-1836-d8a-ff4f",
+                "typeName": "Unit",
+                "from": "entry"
+              },
+              {
+                "characteristics": [
+                  {
+                    "$text": "Each time this unit’s Reanimation Protocols activate, you can re-roll the dice to see how many wounds are regenerated.",
+                    "name": "Description",
+                    "typeId": "9b8f-694b-e5e-b573"
+                  }
+                ],
+                "id": "a7f5-b25d-40f2-e927",
+                "name": "Their Number is Legion",
+                "hidden": false,
+                "typeId": "9cc3-6d83-4dd3-9b64",
+                "typeName": "Abilities",
+                "from": "entry"
+              }
+            ],
+            "selections": [
+              {
+                "selections": [
+                  {
+                    "profiles": [
+                      {
+                        "characteristics": [
+                          {
+                            "$text": "Melee",
+                            "name": "Range",
+                            "typeId": "914c-b413-91e3-a132"
+                          },
+                          {
+                            "$text": "1",
+                            "name": "A",
+                            "typeId": "2337-daa1-6682-b110"
+                          },
+                          {
+                            "$text": "4+",
+                            "name": "WS",
+                            "typeId": "95d1-95f-45b4-11d6"
+                          },
+                          {
+                            "$text": "4",
+                            "name": "S",
+                            "typeId": "ab33-d393-96ce-ccba"
+                          },
+                          {
+                            "$text": "0",
+                            "name": "AP",
+                            "typeId": "41a0-1301-112a-e2f2"
+                          },
+                          {
+                            "$text": "1",
+                            "name": "D",
+                            "typeId": "3254-9fe6-d824-513e"
+                          },
+                          {
+                            "$text": "-",
+                            "name": "Keywords",
+                            "typeId": "893f-9000-ccf7-648e"
+                          }
+                        ],
+                        "id": "478d-a558-3dc0-1ff",
+                        "name": "Close combat weapon",
+                        "hidden": false,
+                        "typeId": "8a40-4aaa-c780-9046",
+                        "typeName": "Melee Weapons",
+                        "from": "entry"
+                      }
+                    ],
+                    "id": "lsbwf97",
+                    "name": "Close combat weapon",
+                    "entryId": "5c25-2188-d5fe-ef0d::3918-80f8-a762-a77b::69d2-ffd6-3daf-b437",
+                    "number": 10,
+                    "type": "upgrade",
+                    "from": "entry"
+                  },
+                  {
+                    "rules": [
+                      {
+                        "description": "Weapons with **[LETHAL HITS]** in their profile are known as Lethal Hits weapons. Each time an attack is made with such a weapon, a Critical Hit automatically wounds the target.",
+                        "id": "d1d1-611e-5191-1095",
+                        "name": "Lethal Hits",
+                        "hidden": false,
+                        "page": 25
+                      },
+                      {
+                        "description": "Weapons with **[RAPID FIRE X]** in their profile are known as Rapid Fire weapons. Each time such a weapon targets a unit within half that weapon’s range, the Attacks characteristic of that weapon is increased by the amount denoted by ‘x’.",
+                        "id": "c5c8-8b58-b8b6-7786",
+                        "name": "Rapid Fire",
+                        "hidden": false,
+                        "page": 25
+                      }
+                    ],
+                    "profiles": [
+                      {
+                        "characteristics": [
+                          {
+                            "$text": "24\"",
+                            "name": "Range",
+                            "typeId": "9896-9419-16a1-92fc"
+                          },
+                          {
+                            "$text": "1",
+                            "name": "A",
+                            "typeId": "3bb-c35f-f54-fb08"
+                          },
+                          {
+                            "$text": "4+",
+                            "name": "BS",
+                            "typeId": "94d-8a98-cf90-183e"
+                          },
+                          {
+                            "$text": "4",
+                            "name": "S",
+                            "typeId": "2229-f494-25db-c5d3"
+                          },
+                          {
+                            "$text": "0",
+                            "name": "AP",
+                            "typeId": "9ead-8a10-520-de15"
+                          },
+                          {
+                            "$text": "1",
+                            "name": "D",
+                            "typeId": "a354-c1c8-a745-f9e3"
+                          },
+                          {
+                            "$text": "Lethal Hits, Rapid Fire 1",
+                            "name": "Keywords",
+                            "typeId": "7f1b-8591-2fcf-d01c"
+                          }
+                        ],
+                        "id": "1b73-4952-9b2a-e193",
+                        "name": "Gauss flayer",
+                        "hidden": false,
+                        "typeId": "f77d-b953-8fa4-b762",
+                        "typeName": "Ranged Weapons",
+                        "from": "entry"
+                      }
+                    ],
+                    "id": "lr1wvbo",
+                    "name": "Gauss flayer",
+                    "entryId": "5c25-2188-d5fe-ef0d::abb0-d7fe-2195-4655",
+                    "number": 10,
+                    "type": "upgrade",
+                    "from": "entry"
+                  }
+                ],
+                "id": "lqpxcg6",
+                "name": "Warrior w/ gauss flayer",
+                "entryId": "5c25-2188-d5fe-ef0d::2498-87b1-fec5-2973",
+                "entryGroupId": "5c25-2188-d5fe-ef0d::ea2d-fc31-6e16-fd70",
+                "number": 10,
+                "type": "model",
+                "from": "group",
+                "group": "10-20 Warriors"
+              }
+            ],
+            "costs": [
+              {
+                "name": "pts",
+                "typeId": "51b2-306e-1021-d207",
+                "value": 90
+              }
+            ],
+            "categories": [
+              {
+                "id": "ee0-cf31-4fb5-6b26",
+                "name": "Faction: Necrons",
+                "entryId": "ee0-cf31-4fb5-6b26",
+                "primary": false
+              },
+              {
+                "id": "cf47-a0d7-7207-29dc",
+                "name": "Infantry",
+                "entryId": "cf47-a0d7-7207-29dc",
+                "primary": false
+              },
+              {
+                "id": "e338-111e-d0c6-b687",
+                "entryId": "e338-111e-d0c6-b687",
+                "name": "Battleline",
+                "primary": true
+              },
+              {
+                "id": "2fd7-338d-d680-5237",
+                "name": "Necron Warriors",
+                "entryId": "2fd7-338d-d680-5237",
+                "primary": false
+              }
+            ],
+            "id": "lj9xhka",
+            "name": "Necron Warriors",
+            "entryId": "5c25-2188-d5fe-ef0d::58e9-5212-f5a6-c12d",
+            "number": 1,
+            "type": "unit",
+            "from": "entry"
+          }
+        ],
+        "categories": [
+          {
+            "name": "Uncategorized",
+            "id": "t8mdaok",
+            "primary": false,
+            "entryId": "(No Category)"
+          },
+          {
+            "name": "Configuration",
+            "id": "l98a6h8",
+            "primary": false,
+            "entryId": "4ac9-fd30-1e3d-b249"
+          },
+          {
+            "name": "Epic Hero",
+            "id": "t861mwa",
+            "primary": false,
+            "entryId": "4f3a-f0f7-6647-348d"
+          },
+          {
+            "name": "Character",
+            "id": "t8ltx0f",
+            "primary": false,
+            "entryId": "9cfd-1c32-585f-7d5c"
+          },
+          {
+            "name": "Battleline",
+            "id": "t85ypde",
+            "primary": false,
+            "entryId": "e338-111e-d0c6-b687"
+          },
+          {
+            "name": "Infantry",
+            "id": "t8borjf",
+            "primary": false,
+            "entryId": "cf47-a0d7-7207-29dc"
+          },
+          {
+            "name": "Swarm",
+            "id": "t89v59k",
+            "primary": false,
+            "entryId": "b00b-5bae-444f-964e"
+          },
+          {
+            "name": "Mounted",
+            "id": "t8qqkkm",
+            "primary": false,
+            "entryId": "14a0-40c9-2748-ae6e"
+          },
+          {
+            "name": "Beast",
+            "id": "t9iebeo",
+            "primary": false,
+            "entryId": "4c3e-9310-a516-3590"
+          },
+          {
+            "name": "Monster",
+            "id": "t9hhgd9",
+            "primary": false,
+            "entryId": "9693-cf84-fe69-37a9"
+          },
+          {
+            "name": "Vehicle",
+            "id": "t9jurjj",
+            "primary": false,
+            "entryId": "dbd4-63-af05-998"
+          },
+          {
+            "name": "Drone",
+            "id": "t9cfdll",
+            "primary": false,
+            "entryId": "2471-e2e0-3f55-d6cb"
+          },
+          {
+            "name": "Dedicated Transport",
+            "id": "t99fxwp",
+            "primary": false,
+            "entryId": "ba07-411c-2832-1f79"
+          },
+          {
+            "name": "Fortification",
+            "id": "t9f3wml",
+            "primary": false,
+            "entryId": "19d7-9c74-2140-5851"
+          },
+          {
+            "name": "Unit",
+            "id": "t91yj2b",
+            "primary": false,
+            "entryId": "1160-70ae-a862-b1a8"
+          },
+          {
+            "name": "Allied Units",
+            "id": "t9ti9fd",
+            "primary": false,
+            "entryId": "887b-ab87-92a2-20f5"
+          },
+          {
+            "name": "Illegal Units",
+            "id": "t96vu2s",
+            "primary": false,
+            "entryId": "(Illegal Units)"
+          }
+        ],
+        "id": "l5v9szg",
+        "name": "Army Roster",
+        "entryId": "bb9d-299a-ed60-2d8a",
+        "catalogueId": "b654-a18a-ea1-3bf2",
+        "catalogueRevision": 87,
+        "catalogueName": "Xenos - Necrons"
+      }
+    ],
+    "id": "kqsz0z",
+    "name": "Just 10 Necron warriors",
+    "battleScribeVersion": 2.03,
+    "generatedBy": "https://newrecruit.eu",
+    "gameSystemId": "sys-352e-adc2-7639-d6a9",
+    "gameSystemName": "Warhammer 40,000 10th Edition",
+    "gameSystemRevision": 84,
+    "xmlns": "http://www.battlescribe.net/schema/rosterSchema"
+  }
+}

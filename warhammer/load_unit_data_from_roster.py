@@ -122,9 +122,16 @@ class LoadUnitDataFromRoster:
         if unit_selection is None:
             return models
 
+        # Check for unit-level profile (used when models don't have individual profiles)
+        unit_profile = None
+        unit_profiles = unit_selection.get("profiles", [])
+        for profile in unit_profiles:
+            if profile.get("typeName") == "Unit":
+                unit_profile = profile
+                break
+
         # Check for unit-level invulnerable save
         unit_invulnerable_save = None
-        unit_profiles = unit_selection.get("profiles", [])
         for profile in unit_profiles:
             if (
                 profile.get("typeName") == "Abilities"
@@ -159,6 +166,10 @@ class LoadUnitDataFromRoster:
                         if chars:
                             inv_text = chars[0].get("$text", "")
                             model_invulnerable_save = int(inv_text.replace("+", ""))
+
+                # If no model profile, use unit-level profile
+                if not model_profile and unit_profile:
+                    model_profile = unit_profile
 
                 # Extract weapons for this model
                 ranged_weapons, melee_weapons = self._extract_weapons(model_sel)
