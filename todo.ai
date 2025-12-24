@@ -1,0 +1,245 @@
+# TODO.AI - Warhammer 40K Probability Calculator Context
+
+## Current State (Dec 24, 2025)
+- **97 tests passing, 3 skipped**
+- Core system working: TDD-driven combat simulator with probability calculations
+- Recent work: Fixed variable attacks (D6, D3) implementation
+- Following strict TDD discipline (Red-Green-Refactor)
+
+## Recent Session Summary
+
+### What We Fixed Today
+1. **Refactored AttackOrchestrator** → Polymorphic design
+   - Created `AttackOrchestrator` (ABC base class)
+   - Split into `RangedAttackOrchestrator` and `MeleeAttackOrchestrator`
+   - Follows same pattern as `Attack` → `RangedAttack`/`MeleeAttack`
+   - Cleaner, type-safe, no dynamic method lookup
+
+2. **Fixed Variable Attacks Bug (D6 attacks)**
+   - **Issue**: Heavy Flamer loaded from JSON had 3 attacks instead of D6
+   - **Root cause**: `LoadUnitDataFromRoster._parse_attacks()` was converting "D6" → 3 (average)
+   - **Fix**: Preserve dice notation strings, added `get_average_attacks()` and `roll_attacks()` methods
+   - **Impact**: Updated all probability calculations and simulations to handle variable attacks
+   - **Bugs found during fix**:
+     - `_calculate_weapon_expected_damage()` used `weapon.damage` instead of `get_average_damage()`
+     - Weapon sorting key used `weapon.damage` instead of `get_average_damage()`
+   
+3. **Created regression tests** (`test_variable_attacks.py`)
+   - Guards against variable attack/damage bugs
+   - Found and fixed additional bugs during test creation
+
+## Architecture Overview
+
+### Core Components
+```
+warhammer_base.py
+├── Model (units with stats, weapons)
+├── Weapon (abstract base)
+│   ├── parse_attacks_average() - "D6" → 3.5
+│   ├── roll_attacks() - actually roll dice
+│   ├── parse_damage_average() - "D6+2" → 5.5
+│   └── roll_damage() - actually roll dice
+├── RangedWeapon (ballistic_skill, range)
+└── MeleeWeapon (weapon_skill)
+
+warhammer_actions.py
+├── Attack (abstract base)
+│   ├── probability_to_hit()
+│   ├── probability_to_wound()
+│   └── probability_to_damage() - handles Lethal Hits asymmetry
+├── RangedAttack
+└── MeleeAttack
+
+warhammer_actions_orchestrators.py
+├── AttackOrchestrator (ABC)
+│   ├── run() - aggregate simulations, calculate stats
+│   └── calculate_weighted_weapon_probabilities()
+├── RangedAttackOrchestrator
+└── MeleeAttackOrchestrator
+
+warhammer.py
+├── Unit (collection of models)
+├── shoot_at_simulation() - rolls dice for each attack
+├── melee_attack_simulation() - rolls dice for melee
+└── shoot_at_return_probability() - calculates expected values
+```
+
+### Key Design Patterns
+1. **Polymorphism**: Attack/Weapon hierarchies with shared behavior
+2. **ABC enforcement**: Prevents instantiation of incomplete classes
+3. **Dual calculation modes**: Simulation (roll dice) vs Probability (calculate averages)
+4. **Weighted probabilities**: Handle units with mixed weapon loadouts
+
+### Critical Implementation Details
+
+#### Variable Damage/Attacks
+- **Storage**: Keep as strings ("D6", "2D6+3") or integers (3)
+- **Probability calculations**: Use `get_average_attacks()` / `get_average_damage()`
+- **Simulations**: Use `roll_attacks()` / `roll_damage()` with DiceRoll instance
+- **Supported**: D6, D3, 2D6, 2D3, D6+2, D6-1, 2D6+3
+
+#### Lethal Hits Keyword (Important Asymmetry!)
+- **Game rule**: Unmodified 6 to hit auto-wounds (skip wound roll)
+- **Semantic asymmetry in `probability_to_wound()`**:
+  - **WITH Lethal Hits**: Returns wounds per ATTACK (includes hit probability)
+    - Calculation: `1/6 (critical) + normal_hits × wound_prob`
+  - **WITHOUT Lethal Hits**: Returns wounds per HIT (conditional probability)
+    - Calculation: Standard wound roll probability
+- **`probability_to_damage()` must handle this**:
+  ```python
+  if has_lethal_hits:
+      return wound_prob × fail_save  # wound already includes hit
+  else:
+      return hit_prob × wound_prob × fail_save
+  ```
+- **Why this matters**: Without the check, Lethal Hits weapons report half their actual damage
+- **Test coverage**: `test_lethal_hits_simulation.py` (3 tests)
+
+#### Weighted Probabilities
+- Units can have multiple weapon types (Storm Bolters + Heavy Flamer)
+- Weight by number of attacks: `(8×2/3 + 3.5×1) / 11.5 = 0.7681`
+- Orchestrator calculates weighted hit/wound/damage rates
+- Critical for convergence tests
+
+## Test Suite Structure
+
+### Test Files (99 tests total)
+- `test_warhammer.py` - Model/Weapon/Unit basics
+- `test_warhammer_actions.py` - Attack probability calculations
+- `test_warhammer_unit_actions.py` - Orchestrator integration tests
+- `test_lethal_hits_simulation.py` - Lethal Hits keyword (3 tests)
+- `test_variable_damage.py` - D6 damage handling (orchestrator level)
+- `test_variable_attacks.py` - D6 attacks regression (NEW - 2 tests)
+- `test_load_unit_data_from_roster.py` - JSON roster loading
+- `test_duplicate_units.py` - Duplicate unit name handling
+
+### Test Tolerances
+```python
+SIMULATION_HIT_WOUND_TOLERANCE = 0.055  # 5.5% for stochastic convergence
+SIMULATION_DAMAGE_TOLERANCE = 0.165     # 16.5% for damage variance
+```
+
+## Known Test Coverage Gaps
+
+### CRITICAL MISSING TESTS (identified today)
+1. **`roll_attacks()` - ZERO direct tests**
+   - Used in simulations but never tested in isolation
+   - Should test: D6 returns 1-6, D3 returns 1-3, 2D6 returns 2-12
+   - Should test: ValueError when dice_roller=None for variable attacks
+   - **Priority: HIGH** - core functionality
+
+2. **`roll_damage()` - ZERO direct tests**
+   - Used in simulations but never tested in isolation
+   - Should test: D6, D6+2, 2D6, 2D6+3 all roll correctly
+   - **Priority: HIGH** - core functionality
+
+3. **`parse_attacks_average()` edge cases**
+   - D3 parsing (covered by get_average but not parse directly)
+   - 2D6, 2D3 (multiple dice)
+   - String integers ("3" vs 3)
+   - Error cases ("D8", "invalid", etc.)
+   - **Priority: MEDIUM**
+
+4. **MeleeWeapon with variable attacks**
+   - All variable attack tests use RangedWeapon
+   - Should test MeleeWeapon("Thunder Hammer", attacks="D3", ...)
+   - **Priority: LOW** - same code path, but coverage matters
+
+5. **Loaded unit validation**
+   - Test that Heavy Flamer from JSON has attacks="D6" (regression)
+   - Test that Lascannon from JSON has damage="D6" (regression)
+   - **Priority: MEDIUM** - guards against loader regressions
+
+6. **Simulation convergence with variable attacks**
+   - Do D6 attacks converge to 3.5 average over many simulations?
+   - **Priority: LOW** - current tests cover implicitly
+
+## Next Steps
+
+### Immediate TODO (Next Session)
+1. **Add missing `roll_attacks()` tests** (point 1 above)
+   - Test D6 rolls produce 1-6
+   - Test D3 rolls produce 1-3
+   - Test 2D6 works
+   - Test error when no dice_roller provided
+   
+2. **Add missing `roll_damage()` tests** (point 2 above)
+   - Test D6, D6+2, D6-1, 2D6, 2D6+3
+   - Test error handling
+
+3. **Add parse_attacks_average edge case tests**
+   - D3, 2D6, 2D3
+   - String integers
+   - Error cases
+
+### Medium-term TODO
+- Melee attack orchestrator tests (most tests are ranged-focused)
+- Frontend integration (Svelte + Vite initialized but unused)
+- Additional keywords (Sustained Hits, Devastating Wounds, etc.)
+- Feel No Pain mechanic (Model has attribute but unused)
+- Multi-model targeting (current: always targets first model)
+
+### Technical Debt
+- None identified - code is clean, well-tested, follows TDD
+
+## Development Workflow
+
+### TDD Discipline (STRICT)
+1. **RED**: Write failing test first
+2. **GREEN**: Write simplest code to pass
+3. **REFACTOR**: Clean while green
+
+### Running Tests
+```bash
+cd /home/captain/adrian_dev/probability_fiddle
+pipenv run pytest warhammer/test/ -q  # All tests
+pipenv run pytest warhammer/test/test_file.py -xvs  # Single file, verbose
+pipenv run pytest warhammer/test/ -k "keyword"  # Filter by name
+```
+
+### Git Workflow
+- Branch: `develop`
+- Repo: `anettleship/probability_fiddle`
+- Commit often with descriptive messages
+- All tests must pass before committing
+
+## Important Files to Review When Resuming
+
+1. **warhammer/warhammer_base.py** (lines 60-145)
+   - `parse_attacks_average()` - Variable attack parsing
+   - `roll_attacks()` - Dice rolling for attacks
+   - `parse_damage_average()` - Variable damage parsing
+   - `roll_damage()` - Dice rolling for damage
+
+2. **warhammer/warhammer_actions.py** (lines 14-26)
+   - `probability_to_damage()` - Lethal Hits asymmetry handling
+
+3. **warhammer/warhammer_actions_orchestrators.py**
+   - Recently refactored to polymorphic design
+   - `calculate_weighted_weapon_probabilities()` - Mixed weapon loadouts
+
+4. **warhammer/test/test_variable_attacks.py**
+   - Just created today (2 tests)
+   - Needs expansion per "Next Steps" above
+
+## Context for AI Assistant
+
+When resuming:
+1. Read this file first to understand current state
+2. Check test count: `pipenv run pytest warhammer/test/ -q` (should be 99+ passing)
+3. Review recent commits: `git log --oneline -10`
+4. User follows strict TDD - always write tests first
+5. User values clean code and type safety
+6. Prefer small, focused changes over large refactors
+7. All discussions should be grounded in actual code, not hypotheticals
+
+## Session Notes
+
+### Dec 24, 2025 - Variable Attacks & Orchestrator Refactor
+- Discovered Heavy Flamer bug (3 vs D6 attacks)
+- Root cause analysis revealed systematic issue in loader
+- Fixed 3 separate bugs while implementing solution
+- Refactored orchestrator to proper polymorphic design
+- User emphasized: "Look at the code, not just availability bias"
+- Created regression tests, but more needed (see Critical Missing Tests)
+- User stopped mid-test-writing - need to complete test coverage next session
