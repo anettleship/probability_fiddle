@@ -12,11 +12,18 @@ class Attack:
         self.weapon = None  # To be defined in subclasses
 
     def probability_to_damage(self) -> float:
-        return (
-            self.probability_to_hit()
-            * self.probability_to_wound()
-            * self.probability_to_fail_save()
-        )
+        # Check if weapon has Lethal Hits keyword
+        if hasattr(self.weapon, "keywords") and "Lethal Hits" in self.weapon.keywords:
+            # For Lethal Hits, probability_to_wound() returns wounds per attack (already includes hit probability)
+            # So we only multiply by fail save probability
+            return self.probability_to_wound() * self.probability_to_fail_save()
+        else:
+            # Standard calculation: hit × wound × fail_save
+            return (
+                self.probability_to_hit()
+                * self.probability_to_wound()
+                * self.probability_to_fail_save()
+            )
 
     def probability_to_hit(self) -> float:
         raise NotImplementedError(

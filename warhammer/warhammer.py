@@ -151,6 +151,9 @@ class Unit:
                 wound_outcomes = attack.probability_to_wound_successful_outcomes()
                 fail_save_outcomes = attack.probability_to_fail_save_outcomes()
                 
+                # Check if weapon has Lethal Hits keyword
+                has_lethal_hits = hasattr(weapon, "keywords") and "Lethal Hits" in weapon.keywords
+                
                 # Roll to hit for each attack
                 for _ in range(weapon.attacks):
                     hit_roll = dice.roll()
@@ -160,13 +163,13 @@ class Unit:
                     if hit_roll in hit_outcomes:
                         result["successful_hits"].append(hit_roll)
                         
-                        # Roll to wound
-                        wound_roll = dice.roll()
-                        result["wound_rolls"].append(wound_roll)
+                        # Check for critical hit (unmodified 6) with Lethal Hits
+                        is_critical_hit = has_lethal_hits and hit_roll == 6
                         
-                        # Check if wound was successful
-                        if wound_roll in wound_outcomes:
-                            result["successful_wounds"].append(wound_roll)
+                        if is_critical_hit:
+                            # Lethal Hits: unmodified 6s auto-wound (no wound roll needed)
+                            result["wound_rolls"].append(6)  # Record as automatic wound
+                            result["successful_wounds"].append(6)
                             
                             # Roll save
                             save_roll = dice.roll()
@@ -177,6 +180,24 @@ class Unit:
                                 result["successful_damage"].append(save_roll)
                                 actual_damage = weapon.roll_damage(weapon.damage, dice)
                                 result["damage_to_unit"].append(actual_damage)
+                        else:
+                            # Normal hit: roll to wound
+                            wound_roll = dice.roll()
+                            result["wound_rolls"].append(wound_roll)
+                            
+                            # Check if wound was successful
+                            if wound_roll in wound_outcomes:
+                                result["successful_wounds"].append(wound_roll)
+                                
+                                # Roll save
+                                save_roll = dice.roll()
+                                result["save_rolls"].append(save_roll)
+                                
+                                # Check if save failed (damage dealt)
+                                if save_roll in fail_save_outcomes:
+                                    result["successful_damage"].append(save_roll)
+                                    actual_damage = weapon.roll_damage(weapon.damage, dice)
+                                    result["damage_to_unit"].append(actual_damage)
         
         return result
 

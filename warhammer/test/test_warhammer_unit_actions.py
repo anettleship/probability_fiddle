@@ -378,13 +378,15 @@ def test_necron_ranged_attack_on_terminators(loaded_units):
     
     # ASSERTION 4: Expected damage includes saves
     # Terminators have 2+ save, so fail save on 1 = 1/6
-    # Expected damage = P(hit) × P(wound) × P(fail_save) × damage
+    # NOTE: For Lethal Hits weapons, wound_probability is per attack (not per hit)
+    # So we don't multiply by hit_probability again
+    # Expected damage = P(wound|attack) × P(fail_save) × damage
     # Gauss Flayer: damage = 1
     damage_prob_tuple = expected_rate["damage_probability"]
     damage_probability = damage_prob_tuple[0] / damage_prob_tuple[1]
     
-    # Should equal hit × wound × fail_save
-    expected_damage_prob = hit_probability * wound_probability * (1/6)  # 1/6 fail save vs 2+
+    # For Lethal Hits: wound_probability already includes hit probability
+    expected_damage_prob = wound_probability * (1/6)  # wound_probability is per attack for Lethal Hits
     assert abs(damage_probability - expected_damage_prob) < 1e-15, (
         f"Damage probability {damage_probability} should match {expected_damage_prob} (within floating point precision)"
     )
@@ -400,12 +402,26 @@ def test_necron_ranged_attack_on_terminators(loaded_units):
         f"Unit damage probability {unit_damage_prob} should match {expected_unit_damage} (within floating point precision)"
     )
     
-    # NOTE: Skipping ASSERTION 6 (simulation convergence) for this test
-    # The Necron Gauss Flayer has Lethal Hits keyword, which is implemented in probability
-    # calculations but NOT YET in the simulation code. This causes a mismatch:
-    # - Expected (with Lethal Hits): P(wound|attack) = 5/18 = 0.278
-    # - Simulated (without Lethal Hits): P(wound|attack) = 1/2 × 1/3 = 1/6 = 0.167
-    # TODO: Implement Lethal Hits in shoot_at_simulation() method
+    # ASSERTION 6: Simulation results should converge to expected probabilities
+    # Now that Lethal Hits is implemented in the simulation, we can validate convergence
+    simulated_hit_rate = summary["avg_hit_rate"]
+    simulated_wound_rate = summary["avg_wound_rate"]
+    
+    # For hit rate, compare directly
+    assert abs(simulated_hit_rate - hit_probability) < SIMULATION_HIT_WOUND_TOLERANCE, (
+        f"Simulated hit rate {simulated_hit_rate:.3f} should converge to expected {hit_probability:.3f}"
+    )
+    
+    # For wound rate with Lethal Hits, the weighted wound_probability is per attack, not per hit
+    # So we need to convert: simulated_wound_per_attack = simulated_hit_rate × simulated_wound_rate
+    simulated_wound_per_attack = simulated_hit_rate * simulated_wound_rate
+    assert abs(simulated_wound_per_attack - wound_probability) < SIMULATION_HIT_WOUND_TOLERANCE, (
+        f"Simulated wound rate per attack {simulated_wound_per_attack:.3f} should converge to expected {wound_probability:.3f} (Lethal Hits)"
+    )
+    
+    assert abs(summary["avg_damage_per_simulation"] - expected_unit_damage) / expected_unit_damage < SIMULATION_DAMAGE_TOLERANCE, (
+        f"Average damage {summary['avg_damage_per_simulation']:.3f} should converge to expected {expected_unit_damage:.3f}"
+    )
 
 
 def test_terminator_ranged_attack_on_necrons(loaded_units):
