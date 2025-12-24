@@ -33,6 +33,21 @@ def test_melee_attack_action_properties(space_marine, necron_warrior, chainsword
     )
 
 
+def test_ranged_attack_probability_to_hit_successful_outcomes_returns_set(
+    space_marine, necron_warrior, bolter
+):
+    attack_action = RangedAttack(
+        attacker=space_marine, target=necron_warrior, weapon=bolter
+    )
+    result = attack_action.probability_to_hit_successful_outcomes()
+    assert isinstance(result, set), (
+        "probability_to_hit_successful_outcomes should return a set"
+    )
+    assert all(isinstance(item, int) for item in result), (
+        "All items in set should be integers"
+    )
+
+
 def test_ranged_attack_hit_probability_should_be_correct_for_space_marine(
     space_marine, necron_warrior, bolter
 ):

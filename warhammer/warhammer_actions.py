@@ -15,6 +15,11 @@ class Attack:
             * self.probability_to_fail_save()
         )
 
+    def probability_to_hit(self):
+        raise NotImplementedError(
+            "Subclasses must implement probability_to_hit method."
+        )
+
     def _calculate_wound_roll_required(self):
         """Calculate the required wound roll based on weapon strength vs target toughness."""
         strength = self.weapon.strength
@@ -121,14 +126,15 @@ class RangedAttack(Attack):
         super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
 
-    def probability_to_hit(self):
+    def probability_to_hit_successful_outcomes(self):
         required_roll = self.weapon.ballistic_skill
         if required_roll == 0:
-            return 1.0  # Auto-hit weapon
-        successful_outcomes = (
-            7 - required_roll
-        )  # e.g., for 4+, successful outcomes are 4,5,6 => 3 outcomes
-        return successful_outcomes / 6
+            return {1, 2, 3, 4, 5, 6}  # Auto-hit weapon hits on all rolls
+        return set(range(required_roll, 7))  # e.g., for 4+, returns {4, 5, 6}
+
+    def probability_to_hit(self):
+        successful_outcomes = self.probability_to_hit_successful_outcomes()
+        return len(successful_outcomes) / 6
 
     def apply_benefit_of_cover(self, modified_save: int) -> int:
         # Check if weapon has "Ignores Cover" keyword
