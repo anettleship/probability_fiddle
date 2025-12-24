@@ -65,7 +65,7 @@ class Unit:
 
         return expected_hits, expected_wounds, expected_damage
 
-    def shoot_at(self, target_unit):
+    def shoot_at_return_probability(self, target_unit):
         """Calculate expected damage from all ranged weapons firing at target unit."""
 
         # Aggregate weapons across all models

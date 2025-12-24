@@ -436,3 +436,135 @@ def test_attack_probability_accounts_for_multiple_attacks(
     assert abs(expected_total_damage - (1 / 3)) < 0.001, (
         f"Expected damage accounting for attacks: 2 × (1/6) = 1/3 (≈0.333), got {expected_total_damage}"
     )
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,expected_outcomes",
+    [
+        ("space_marine", "necron_warrior", "bolter", {3, 4, 5, 6}),  # BS 3+
+        ("necron_warrior", "terminator_with_heavy_flamer", "gauss_flayer", {4, 5, 6}),  # BS 4+
+        ("terminator_with_heavy_flamer", "necron_warrior", "heavy_flamer", {1, 2, 3, 4, 5, 6}),  # Auto-hit
+    ],
+)
+def test_ranged_attack_to_hit_outcomes(
+    request, attacker_fixture, target_fixture, weapon_fixture, expected_outcomes
+):
+    """Test hit outcomes for ranged attacks."""
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+    
+    attack = RangedAttack(attacker=attacker, target=target, weapon=weapon)
+    hit_outcomes = attack.probability_to_hit_successful_outcomes()
+    
+    assert hit_outcomes == expected_outcomes
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,expected_outcomes",
+    [
+        ("space_marine", "necron_warrior", "bolter", {4, 5, 6}),  # S4 vs T4 = 4+
+        ("necron_warrior", "terminator_with_heavy_flamer", "gauss_flayer", {5, 6}),  # S4 vs T5 = 5+
+        ("terminator_with_heavy_flamer", "necron_warrior", "heavy_flamer", {3, 4, 5, 6}),  # S5 vs T4 = 3+
+    ],
+)
+def test_ranged_attack_to_wound_outcomes(
+    request, attacker_fixture, target_fixture, weapon_fixture, expected_outcomes
+):
+    """Test wound outcomes for ranged attacks."""
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+    
+    attack = RangedAttack(attacker=attacker, target=target, weapon=weapon)
+    wound_outcomes = attack.probability_to_wound_successful_outcomes()
+    
+    assert wound_outcomes == expected_outcomes
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,benefit_of_cover,expected_outcomes",
+    [
+        ("space_marine", "necron_warrior", "bolter", False, {1, 2, 3, 4}),  # 5+ save (no cover)
+        ("space_marine", "necron_warrior", "bolter", True, {1, 2, 3}),  # 4+ save (with cover)
+        ("necron_warrior", "terminator_with_heavy_flamer", "gauss_flayer", False, {1}),  # 2+ save
+        ("terminator_with_heavy_flamer", "necron_warrior", "heavy_flamer", False, {1, 2, 3, 4}),  # 5+ save
+        ("terminator_with_heavy_flamer", "necron_warrior", "heavy_flamer", True, {1, 2, 3, 4}),  # Ignores cover
+    ],
+)
+def test_ranged_attack_to_fail_save_outcomes(
+    request, attacker_fixture, target_fixture, weapon_fixture, benefit_of_cover, expected_outcomes
+):
+    """Test fail save outcomes for ranged attacks."""
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+    
+    attack = RangedAttack(
+        attacker=attacker, target=target, weapon=weapon, benefit_of_cover=benefit_of_cover
+    )
+    fail_save_outcomes = attack.probability_to_fail_save_outcomes()
+    
+    assert fail_save_outcomes == expected_outcomes
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,expected_outcomes",
+    [
+        ("space_marine", "necron_warrior", "chainsword", {3, 4, 5, 6}),  # WS 3+
+    ],
+)
+def test_melee_attack_to_hit_outcomes(
+    request, attacker_fixture, target_fixture, weapon_fixture, expected_outcomes
+):
+    """Test hit outcomes for melee attacks."""
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+    
+    attack = MeleeAttack(attacker=attacker, target=target, weapon=weapon)
+    hit_outcomes = attack.probability_to_hit_successful_outcomes()
+    
+    assert hit_outcomes == expected_outcomes
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,expected_outcomes",
+    [
+        ("space_marine", "necron_warrior", "chainsword", {4, 5, 6}),  # S4 vs T4 = 4+
+    ],
+)
+def test_melee_attack_to_wound_outcomes(
+    request, attacker_fixture, target_fixture, weapon_fixture, expected_outcomes
+):
+    """Test wound outcomes for melee attacks."""
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+    
+    attack = MeleeAttack(attacker=attacker, target=target, weapon=weapon)
+    wound_outcomes = attack.probability_to_wound_successful_outcomes()
+    
+    assert wound_outcomes == expected_outcomes
+
+
+@pytest.mark.parametrize(
+    "attacker_fixture,target_fixture,weapon_fixture,benefit_of_cover,expected_outcomes",
+    [
+        ("space_marine", "necron_warrior", "chainsword", True, {1, 2, 3, 4}),  # Melee ignores cover
+    ],
+)
+def test_melee_attack_to_fail_save_outcomes(
+    request, attacker_fixture, target_fixture, weapon_fixture, benefit_of_cover, expected_outcomes
+):
+    """Test fail save outcomes for melee attacks."""
+    attacker = request.getfixturevalue(attacker_fixture)
+    target = request.getfixturevalue(target_fixture)
+    weapon = request.getfixturevalue(weapon_fixture)
+    
+    attack = MeleeAttack(
+        attacker=attacker, target=target, weapon=weapon, benefit_of_cover=benefit_of_cover
+    )
+    fail_save_outcomes = attack.probability_to_fail_save_outcomes()
+    
+    assert fail_save_outcomes == expected_outcomes

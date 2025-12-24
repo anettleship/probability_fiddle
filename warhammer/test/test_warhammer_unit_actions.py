@@ -12,7 +12,7 @@ def test_unit_can_shoot_single_weapon_type_at_target(
         models=[terminator_with_storm_bolter], name="Single Terminator"
     )
 
-    results = single_terminator_unit.shoot_at(necron_warrior_unit)
+    results = single_terminator_unit.shoot_at_return_probability(necron_warrior_unit)
 
     assert len(results.weapon_results) == 1
     assert results.weapon_results[0].weapon_name == "Storm Bolter"
@@ -37,7 +37,7 @@ def test_unit_ranged_attacked_probabilities_match_expected(
     # expected_damage = attacks × P(hit) × P(wound) × P(fail_save) × damage
 
     # Execute unit ranged attack
-    results = terminator_unit.shoot_at(necron_warrior_unit)
+    results = terminator_unit.shoot_at_return_probability(necron_warrior_unit)
 
     # Verify results structure
     assert hasattr(results, "weapon_results"), "Results should have weapon_results"
