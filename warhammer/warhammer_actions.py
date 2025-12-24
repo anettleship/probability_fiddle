@@ -174,9 +174,14 @@ class MeleeAttack(Attack):
         super().__init__(attacker, target, benefit_of_cover)
         self.weapon = weapon
 
-    def probability_to_hit(self):
+    def probability_to_hit_successful_outcomes(self):
         required_roll = self.weapon.weapon_skill
-        successful_outcomes = (
-            7 - required_roll
-        )  # e.g., for 3+, successful outcomes are 3,4,5,6 => 4 outcomes
-        return successful_outcomes / 6
+        return set(range(required_roll, 7))  # e.g., for 3+, returns {3, 4, 5, 6}
+
+    def probability_to_hit(self):
+        successful_outcomes = self.probability_to_hit_successful_outcomes()
+        return len(successful_outcomes) / 6
+
+    def apply_benefit_of_cover(self, modified_save: int) -> int:
+        # Melee attacks don't benefit from cover
+        return modified_save
