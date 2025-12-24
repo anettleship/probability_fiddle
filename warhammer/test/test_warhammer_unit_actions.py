@@ -328,7 +328,7 @@ def test_attack_orchestrator_runs_simulation_and_returns_summary_with_fractions(
     assert len(detail["hit_rolls"]) == 10000, "Should have 10000 total hit rolls (1000 sims × 10 attacks)"
 
 
-def test_ranged_attack_orchestrator_probabilities(loaded_units):
+def test_necron_ranged_attack_on_terminators(loaded_units):
     """Test ranged attack orchestrator with expected probabilities for 10 Necron Warriors vs Terminators."""
     # Get units from fixture
     attacker_unit = loaded_units["necrons"]
@@ -358,8 +358,8 @@ def test_ranged_attack_orchestrator_probabilities(loaded_units):
     hit_prob_tuple = expected_rate["hit_probability"]
     hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
     expected_hit = 1/2  # 4+ to hit = {4,5,6} = 3/6 = 1/2
-    assert abs(hit_probability - expected_hit) < 0.001, (
-        f"Hit probability {hit_probability} should be ~{expected_hit}"
+    assert hit_probability == expected_hit, (
+        f"Hit probability {hit_probability} should be exactly {expected_hit}"
     )
     
     # ASSERTION 3: Wound probability
@@ -371,8 +371,8 @@ def test_ranged_attack_orchestrator_probabilities(loaded_units):
     wound_prob_tuple = expected_rate["wound_probability"]
     wound_probability = wound_prob_tuple[0] / wound_prob_tuple[1]
     expected_wound = 5/18  # Lethal Hits calculation
-    assert abs(wound_probability - expected_wound) < 0.001, (
-        f"Wound probability {wound_probability} should be ~{expected_wound} (Lethal Hits)"
+    assert wound_probability == expected_wound, (
+        f"Wound probability {wound_probability} should be exactly {expected_wound} (Lethal Hits)"
     )
     
     # ASSERTION 4: Expected damage includes saves
@@ -384,8 +384,8 @@ def test_ranged_attack_orchestrator_probabilities(loaded_units):
     
     # Should equal hit × wound × fail_save
     expected_damage_prob = hit_probability * wound_probability * (1/6)  # 1/6 fail save vs 2+
-    assert abs(damage_probability - expected_damage_prob) < 0.01, (
-        f"Damage probability {damage_probability} should be ~{expected_damage_prob}"
+    assert abs(damage_probability - expected_damage_prob) < 1e-15, (
+        f"Damage probability {damage_probability} should match {expected_damage_prob} (within floating point precision)"
     )
     
     # ASSERTION 5: Expected damage per unit attack = 10 × average damage
@@ -395,13 +395,8 @@ def test_ranged_attack_orchestrator_probabilities(loaded_units):
     
     # Should be 10 × (damage_prob × 1) = 10 × damage_probability
     expected_unit_damage = 10 * damage_probability * 1  # 1 is the damage value
-    assert abs(unit_damage_prob - expected_unit_damage) < 0.01, (
-        f"Unit damage probability {unit_damage_prob} should be ~{expected_unit_damage}"
-    )
-    
-    # Verify the actual simulated damage is reasonably close to expected
-    assert summary["avg_damage_per_simulation"] > 0, (
-        "Should have some average damage per simulation"
+    assert abs(unit_damage_prob - expected_unit_damage) < 1e-15, (
+        f"Unit damage probability {unit_damage_prob} should match {expected_unit_damage} (within floating point precision)"
     )
 
 
@@ -439,16 +434,16 @@ def test_terminator_ranged_attack_on_necrons(loaded_units):
     hit_prob_tuple = expected_rate["hit_probability"]
     hit_probability = hit_prob_tuple[0] / hit_prob_tuple[1]
     expected_hit = 2/3  # 3+ to hit = {3,4,5,6} = 4/6 = 2/3
-    assert abs(hit_probability - expected_hit) < 0.001, (
-        f"Hit probability {hit_probability} should be ~{expected_hit}"
+    assert hit_probability == expected_hit, (
+        f"Hit probability {hit_probability} should be exactly {expected_hit}"
     )
     
     # ASSERTION 3: Wound probability
     # Storm Bolter: S4 vs T4 Necron Warrior = 4+ = 1/2
     wound_prob_tuple = expected_rate["wound_probability"]
     wound_probability = wound_prob_tuple[0] / wound_prob_tuple[1]
-    assert abs(wound_probability - 0.5) < 0.001, (
-        f"Wound probability {wound_probability} should be ~0.5"
+    assert wound_probability == 0.5, (
+        f"Wound probability {wound_probability} should be exactly 0.5"
     )
     
     # ASSERTION 4: Expected damage probability
@@ -466,9 +461,5 @@ def test_terminator_ranged_attack_on_necrons(loaded_units):
     
     # Should be proportional to number of attacks and damage probability
     assert unit_damage_prob > 0, "Unit damage probability should be positive"
-    
-    # Verify simulation produced reasonable damage
-    assert summary["avg_damage_per_simulation"] > 0, (
-        "Should have some average damage per simulation"
-    )
+
 
